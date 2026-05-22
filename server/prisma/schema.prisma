@@ -3,9 +3,212 @@
 
 generator client {
   provider = "prisma-client-js"
+  engineType = "library"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum InvestmentStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum DepositStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum WithdrawalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum BannerType {
+  INFO
+  WARNING
+  DANGER
+}
+
+enum WithdrawalWindow {
+  DAILY
+  EVERY_2_DAYS
+  TWICE_WEEKLY
+  WEEKLY
+}
+
+model User {
+  id            String   @id @default(uuid())
+  username      String   @unique
+  email         String   @unique
+  phone         String?
+  passwordHash  String
+  referralCode  String   @unique
+  referredBy    String?
+  balance       Decimal  @default(0) @db.Decimal(15, 2)
+  frozen        Boolean  @default(false)
+  role          UserRole @default(USER)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  investments   Investment[]
+  deposits      Deposit[]
+  withdrawals   Withdrawal[]
+  notifications Notification[]
+  referrals     Referral[]     @relation("ReferrerRelation")
+  referredUser  Referral?      @relation("ReferredUserRelation")
+
+  // Admin logs for actions taken by this user (if admin)
+  adminLogs     AdminLog[]     @relation("AdminAction")
+
+  // Admin logs targeting this user
+  targetedLogs  AdminLog[]     @relation("TargetUser")
+
+  @@index([email])
+  @@index([username])
+  @@index([referralCode])
+}
+
+model InvestmentPlan {
+  id            String   @id @default(uuid())
+  name          String
+  minAmount     Decimal  @db.Decimal(15, 2)
+  maxAmount     Decimal  @db.Decimal(15, 2)
+  roiPercent    Decimal  @db.Decimal(5, 2)
+  durationHours Int
+  active        Boolean  @default(true)
+  displayOrder  Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  investments   Investment[]
+}
+
+model Investment {
+  id             String           @id @default(uuid())
+  userId         String
+  planId         String
+  amount         Decimal          @db.Decimal(15, 2)
+  expectedProfit Decimal          @db.Decimal(15, 2)
+  maturityDate   DateTime
+  status         InvestmentStatus @default(ACTIVE)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  user           User             @relation(fields: [userId], references: [id])
+  plan           InvestmentPlan   @relation(fields: [planId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+}
+
+model Deposit {
+  id              String        @id @default(uuid())
+  userId          String
+  amount          Decimal       @db.Decimal(15, 2)
+  method          String
+  proofImageUrl   String?
+  status          DepositStatus @default(PENDING)
+  approvedBy      String?
+  rejectionReason String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  user            User          @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+}
+
+model Withdrawal {
+  id              String           @id @default(uuid())
+  userId          String
+  amount          Decimal          @db.Decimal(15, 2)
+  bankName        String
+  accountNumber   String
+  accountName     String
+  status          WithdrawalStatus @default(PENDING)
+  approvedBy      String?
+  rejectionReason String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  user            User             @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+}
+
+model Referral {
+  id             String   @id @default(uuid())
+  referrerId     String
+  referredUserId String   @unique
+  commission     Decimal  @db.Decimal(15, 2)
+  status         String   @default("PENDING") // e.g., PENDING, PAID
+  createdAt      DateTime @default(now())
+
+  referrer       User     @relation("ReferrerRelation", fields: [referrerId], references: [id])
+  referredUser   User     @relation("ReferredUserRelation", fields: [referredUserId], references: [id])
+
+  @@index([referrerId])
+  @@index([referredUserId])
+}
+
+model Banner {
+  id        String     @id @default(uuid())
+  message   String
+  type      BannerType @default(INFO)
+  active    Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model AdminLog {
+  id         String   @id @default(uuid())
+  adminId    String
+  action     String
+  targetUser String?
+  details    String
+  createdAt  DateTime @default(now())
+
+  admin      User     @relation("AdminAction", fields: [adminId], references: [id])
+  target     User?    @relation("TargetUser", fields: [targetUser], references: [id])
+
+  @@index([adminId])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([read])
+}
+
+model SystemSettings {
+  id               Int              @id @default(1)
+  withdrawalWindow WithdrawalWindow @default(DAILY)
+  withdrawalFreeze Boolean          @default(false)
+  maintenanceMode  Boolean          @default(false)
+  commissionRate   Decimal          @db.Decimal(5, 2) @default(10.00)
+  minWithdrawal    Decimal          @db.Decimal(15, 2) @default(1000.00)
+  maxWithdrawal    Decimal          @db.Decimal(15, 2) @default(1000000.00)
+  updatedAt        DateTime         @updatedAt
 }
