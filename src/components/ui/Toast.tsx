@@ -2,9 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
 import { useToastStore, type Toast as ToastType } from '../../store/toastStore';
-import { slideIn } from '../../lib/animations';
+import { slideIn, slideUp } from '../../lib/animations';
+import { useWindowSize } from '../../hooks/useWindowSize';
 
-const ToastItem: React.FC<{ toast: ToastType }> = ({ toast }) => {
+const ToastItem: React.FC<{ toast: ToastType; isMobile: boolean }> = ({ toast, isMobile }) => {
   const removeToast = useToastStore((state) => state.removeToast);
   const [progress, setProgress] = useState(100);
 
@@ -43,15 +44,15 @@ const ToastItem: React.FC<{ toast: ToastType }> = ({ toast }) => {
 
   return (
     <motion.div
-      variants={slideIn}
+      variants={isMobile ? slideUp : slideIn}
       initial="initial"
       animate="animate"
       exit="exit"
       layout
-      className={`relative flex items-center gap-3 p-4 bg-card-elevated border ${borders[toast.type]} rounded-xl shadow-2xl min-w-[280px] max-w-md overflow-hidden`}
+      className={`relative flex items-center gap-3 p-4 bg-card-elevated border border-white/[0.03] ${borders[toast.type]} rounded-xl shadow-2xl min-w-[280px] max-w-md overflow-hidden backdrop-blur-xl`}
     >
       <div className="flex-shrink-0">{icons[toast.type]}</div>
-      <p className="text-sm font-medium text-text-primary flex-grow pr-4">
+      <p className="text-xs lg:text-sm font-bold tracking-tight text-text-primary flex-grow pr-4">
         {toast.message}
       </p>
       <button
@@ -78,13 +79,19 @@ const ToastItem: React.FC<{ toast: ToastType }> = ({ toast }) => {
 
 const ToastContainer: React.FC = () => {
   const toasts = useToastStore((state) => state.toasts);
+  const { width } = useWindowSize();
+  const isMobile = width < 1024;
 
   return (
-    <div className="fixed top-6 right-6 z-[100] flex flex-col gap-3 pointer-events-none">
+    <div className={`fixed z-[100] flex flex-col gap-3 pointer-events-none transition-all duration-500 ${
+      isMobile
+        ? 'bottom-24 left-4 right-4 items-center'
+        : 'top-6 right-6 items-end'
+    }`}>
       <AnimatePresence mode="popLayout">
         {toasts.map((t) => (
           <div key={t.id} className="pointer-events-auto">
-            <ToastItem toast={t} />
+            <ToastItem toast={t} isMobile={isMobile} />
           </div>
         ))}
       </AnimatePresence>

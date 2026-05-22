@@ -13,7 +13,7 @@ const Skeleton: React.FC<SkeletonProps> = ({
   height,
   className = '',
 }) => {
-  const baseStyles = 'relative overflow-hidden bg-purple-primary/5 rounded-md';
+  const baseStyles = 'relative overflow-hidden bg-white/5 rounded-md';
 
   const variants = {
     text: 'h-4 w-full mb-2',
@@ -32,7 +32,7 @@ const Skeleton: React.FC<SkeletonProps> = ({
       className={`${baseStyles} ${variants[variant]} ${className}`}
       style={style}
     >
-      <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/5 to-transparent" />
+      <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white-[0.02] to-transparent" />
     </div>
   );
 };
