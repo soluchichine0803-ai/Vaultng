@@ -36,7 +36,7 @@ const ActivityTicker: React.FC = () => {
   const displayItems = [...items, ...items];
 
   return (
-    <div className="w-full bg-white/[0.01] backdrop-blur-md border-b border-white/[0.02] overflow-hidden h-9 flex items-center">
+    <div className="w-full bg-white/[0.01] backdrop-blur-md border-b border-white/[0.04] overflow-hidden h-9 flex items-center">
       <motion.div
         animate={{ x: [0, -1000] }}
         transition={{
@@ -51,7 +51,7 @@ const ActivityTicker: React.FC = () => {
         {displayItems.map((item, idx) => (
           <div key={`${item.id}-${idx}`} className="flex items-center gap-2">
             {icons[item.type]}
-            <span className="text-[11px] font-medium text-text-muted uppercase tracking-wider">
+            <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider opacity-90">
               {item.message}
             </span>
             <div className="w-1 h-1 rounded-full bg-purple-primary/30 ml-4"></div>

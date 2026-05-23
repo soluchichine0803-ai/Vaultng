@@ -24,7 +24,7 @@ const Button: React.FC<ButtonProps> = ({
   const baseStyles = 'relative inline-flex items-center justify-center font-medium transition-colors focus:outline-none disabled:opacity-50 disabled:pointer-events-none rounded-lg overflow-hidden';
 
   const variants = {
-    primary: 'bg-purple-primary text-white hover:bg-purple-bright active:bg-purple-deep shadow-[0_4px_12px_rgba(124,58,237,0.15)] hover:shadow-[0_4px_24px_rgba(124,58,237,0.4)] transition-shadow duration-300',
+    primary: 'bg-purple-primary text-white hover:bg-purple-bright active:bg-purple-deep shadow-[0_4px_12px_rgba(124,58,237,0.25)] hover:shadow-[0_8px_32px_rgba(124,58,237,0.45)] transition-shadow duration-300 ring-1 ring-white/10 ring-inset',
     secondary: 'bg-white/[0.03] border border-white/10 text-text-primary hover:bg-white/[0.06] hover:border-white/20',
     danger: 'bg-danger/80 text-white hover:bg-danger active:bg-danger-deep transition-colors',
     ghost: 'bg-transparent text-text-secondary hover:bg-white/[0.05] hover:text-text-primary',
