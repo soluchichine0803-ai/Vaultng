@@ -19,7 +19,7 @@ const BottomNav: React.FC = () => {
   ];
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-background-primary/90 backdrop-blur-2xl border-t border-white/[0.04] px-2 pb-safe shadow-[0_-10px_40px_-12px_rgba(124,58,237,0.12)]">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-background-primary/95 backdrop-blur-2xl border-t border-white/[0.06] px-2 pb-safe shadow-[0_-12px_48px_-12px_rgba(124,58,237,0.22)]">
       <div className="flex items-center justify-around h-[72px] max-w-md mx-auto">
         {navItems.map((item) => (
           <NavLink
