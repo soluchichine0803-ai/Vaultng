@@ -21,10 +21,10 @@ const Input: React.FC<InputProps> = ({
   const baseStyles = 'w-full bg-white/[0.02] border transition-all duration-300 outline-none px-4 py-3 text-sm rounded-lg text-text-primary placeholder:text-text-muted/40';
 
   const stateStyles = error
-    ? 'border-danger/20 focus:border-danger/50 focus:bg-danger/[0.02]'
+    ? 'border-danger/30 focus:border-danger/60 focus:bg-danger/[0.03]'
     : success
-    ? 'border-success/20 focus:border-success/50 focus:bg-success/[0.02]'
-    : 'border-white/[0.05] focus:border-purple-primary/30 focus:bg-white/[0.04] focus:shadow-[0_0_24px_rgba(124,58,237,0.05)]';
+    ? 'border-success/30 focus:border-success/60 focus:bg-success/[0.03]'
+    : 'border-white/[0.08] focus:border-purple-primary/50 focus:bg-white/[0.05] focus:shadow-[0_0_30px_rgba(124,58,237,0.08)]';
 
   const generatedId = useId();
   const inputId = id || generatedId;

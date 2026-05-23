@@ -19,7 +19,7 @@ const BottomNav: React.FC = () => {
   ];
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-background-primary/80 backdrop-blur-2xl border-t border-white/[0.04] px-2 pb-safe">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-background-primary/90 backdrop-blur-2xl border-t border-white/[0.04] px-2 pb-safe shadow-[0_-10px_40px_-12px_rgba(124,58,237,0.12)]">
       <div className="flex items-center justify-around h-[72px] max-w-md mx-auto">
         {navItems.map((item) => (
           <NavLink
@@ -39,18 +39,18 @@ const BottomNav: React.FC = () => {
                 >
                   {item.icon}
                 </motion.span>
-                <span className={`text-[10px] font-black uppercase tracking-tighter transition-opacity duration-300 ${isActive ? 'opacity-100' : 'opacity-60'}`}>
+                <span className={`text-[10px] font-black uppercase tracking-tighter transition-opacity duration-300 ${isActive ? 'opacity-100' : 'opacity-40'}`}>
                   {item.label}
                 </span>
                 {isActive && (
                   <>
                     <motion.div
                       layoutId="activeTabIndicator"
-                      className="absolute -top-[1px] w-10 h-[2px] bg-purple-primary rounded-full shadow-[0_0_15px_rgba(124,58,237,0.8)]"
+                      className="absolute -top-[1px] w-10 h-[1.5px] bg-purple-primary rounded-full shadow-[0_0_10px_rgba(124,58,237,0.4)]"
                     />
                     <motion.div
                       layoutId="activeTabGlow"
-                      className="absolute inset-0 bg-purple-primary/5 blur-xl rounded-full"
+                      className="absolute inset-0 bg-purple-primary/10 blur-2xl rounded-full"
                     />
                   </>
                 )}
