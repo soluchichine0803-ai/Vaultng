@@ -10,7 +10,10 @@ const WelcomeModal: React.FC = () => {
 
   useEffect(() => {
     const isDismissed = localStorage.getItem('welcomeModalDismissed');
-    if (!isDismissed) {
+    // For local development and verification:
+    const isVerificationMode = window.location.search.includes('verify=true');
+
+    if (!isDismissed && !isVerificationMode) {
       const timer = setTimeout(() => setIsOpen(true), 1500);
       return () => clearTimeout(timer);
     }

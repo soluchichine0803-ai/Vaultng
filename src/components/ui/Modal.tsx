@@ -57,7 +57,7 @@ const Modal: React.FC<ModalProps> = ({
             initial="initial"
             animate="animate"
             exit="exit"
-            className="relative w-full max-w-lg bg-card border border-purple-primary/20 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+            className="relative w-full max-w-lg bg-background-secondary border border-white/[0.08] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
           >
             <div className="flex items-center justify-between p-5 border-b border-purple-primary/10">
               {title && <h3 className="text-lg font-bold text-text-primary">{title}</h3>}

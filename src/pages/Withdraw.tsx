@@ -8,16 +8,16 @@ import Button from '../components/ui/Button';
 const Withdraw: React.FC = () => {
   return (
     <motion.div variants={pageTransition} initial="initial" animate="animate" exit="exit" className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-bold">Withdraw Assets</h1>
-        <p className="text-text-muted text-sm">Securely transfer your earnings to your bank or wallet.</p>
+      <header className="flex flex-col gap-0.5 lg:gap-1">
+        <h1 className="text-lg lg:text-xl font-bold tracking-tight">Withdraw Assets</h1>
+        <p className="text-text-muted text-[10px] lg:text-xs font-black opacity-60 uppercase tracking-tighter">Operational: Liquidity Outflow</p>
       </header>
 
-      <div className="max-w-md mx-auto w-full">
-        <Card className="p-8 space-y-6">
-          <div className="p-4 bg-purple-primary/5 border border-purple-primary/10 rounded-xl">
-            <p className="text-[10px] uppercase font-bold text-text-muted">Withdrawable Balance</p>
-            <p className="text-2xl font-bold text-purple-soft font-mono">₦24,500.00</p>
+      <div className="max-w-md mx-auto w-full pt-4 lg:pt-8">
+        <Card className="p-6 lg:p-8 space-y-6 border-white/[0.02]">
+          <div className="p-4 lg:p-5 bg-white/[0.03] border border-white/[0.05] rounded-xl">
+            <p className="text-[9px] uppercase font-black text-text-muted tracking-widest mb-1">Available Liquidity</p>
+            <p className="text-2xl lg:text-3xl font-bold text-white font-mono">₦24,500.75</p>
           </div>
 
           <Input
@@ -36,7 +36,7 @@ const Withdraw: React.FC = () => {
           />
 
           <div className="pt-2">
-            <Button variant="primary" className="w-full h-12">Confirm Withdrawal</Button>
+            <Button variant="primary" className="w-full h-14 font-black uppercase text-xs tracking-widest">Confirm Withdrawal</Button>
           </div>
         </Card>
       </div>

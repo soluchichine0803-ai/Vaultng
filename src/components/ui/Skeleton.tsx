@@ -32,7 +32,7 @@ const Skeleton: React.FC<SkeletonProps> = ({
       className={`${baseStyles} ${variants[variant]} ${className}`}
       style={style}
     >
-      <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white-[0.02] to-transparent" />
+      <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/[0.03] to-transparent" />
     </div>
   );
 };

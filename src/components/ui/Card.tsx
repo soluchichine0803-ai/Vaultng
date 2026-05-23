@@ -17,12 +17,12 @@ const Card: React.FC<CardProps> = ({
   const baseStyles = 'rounded-xl overflow-hidden border transition-all duration-300';
 
   const variants = {
-    default: 'bg-card border-purple-primary/10',
-    elevated: 'bg-card-elevated border-purple-primary/20 shadow-[0_4px_20px_rgba(0,0,0,0.4)]',
-    glass: 'bg-background-secondary/40 backdrop-blur-md border-white/5',
+    default: 'bg-white/[0.02] border-white/[0.05]',
+    elevated: 'bg-white/[0.04] border-white/[0.08] shadow-[0_8px_32px_rgba(0,0,0,0.4)]',
+    glass: 'bg-background-primary/40 backdrop-blur-xl border-white/[0.05]',
   };
 
-  const hoverStyles = hoverable ? 'hover:translate-y-[-4px] hover:border-purple-primary/30 hover:shadow-[0_0_20px_rgba(124,58,237,0.1)]' : '';
+  const hoverStyles = hoverable ? 'hover:bg-white/[0.05] hover:border-white/[0.1] hover:shadow-[0_4px_20px_rgba(124,58,237,0.05)]' : '';
 
   return (
     <motion.div

@@ -85,8 +85,8 @@ const ToastContainer: React.FC = () => {
   return (
     <div className={`fixed z-[100] flex flex-col gap-3 pointer-events-none transition-all duration-500 ${
       isMobile
-        ? 'bottom-24 left-4 right-4 items-center'
-        : 'top-6 right-6 items-end'
+        ? 'bottom-[92px] left-4 right-4 items-center'
+        : 'top-20 right-6 items-end'
     }`}>
       <AnimatePresence mode="popLayout">
         {toasts.map((t) => (

@@ -5,7 +5,7 @@ import AnimatedCounter from '../ui/AnimatedCounter';
 const Header: React.FC = () => {
   return (
     <header className="sticky top-0 z-40 w-full bg-background-primary/60 backdrop-blur-xl border-b border-white/[0.03] h-14 lg:h-16">
-      <div className="h-full px-4 md:px-6 lg:px-0 flex items-center justify-between">
+      <div className="h-full px-4 md:px-6 lg:px-10 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <div className="w-7 h-7 lg:w-8 lg:h-8 rounded-lg bg-purple-primary flex items-center justify-center shadow-[0_0_15px_rgba(124,58,237,0.3)]">
             <Wallet className="text-white w-4 h-4 lg:w-5 lg:h-5" />
@@ -31,7 +31,7 @@ const Header: React.FC = () => {
           </button>
 
           <button className="p-0.5 rounded-xl border border-white/[0.05] hover:border-purple-primary/30 transition-colors">
-            <div className="w-8 h-8 lg:w-9 lg:h-9 rounded-lg bg-card-elevated flex items-center justify-center">
+            <div className="w-8 h-8 lg:w-9 lg:h-9 rounded-lg bg-white/[0.03] flex items-center justify-center">
               <User className="text-text-secondary w-4 h-4 lg:w-5 lg:h-5" />
             </div>
           </button>

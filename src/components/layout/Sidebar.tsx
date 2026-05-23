@@ -20,7 +20,7 @@ const Sidebar: React.FC = () => {
   ];
 
   return (
-    <aside className="hidden lg:flex flex-col w-[200px] bg-background-primary/40 backdrop-blur-xl border-r border-white/[0.02] h-screen fixed left-0 top-0 z-40">
+    <aside className="hidden lg:flex flex-col w-[200px] bg-background-primary/40 backdrop-blur-xl border-r border-white/[0.03] h-screen fixed left-0 top-0 z-40">
       <div className="p-4">
         <nav className="space-y-0.5">
           {navItems.map((item) => (
