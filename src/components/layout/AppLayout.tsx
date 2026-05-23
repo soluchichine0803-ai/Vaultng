@@ -32,8 +32,8 @@ const AppLayout: React.FC = () => {
             message="Welcome to VaultNG. Start your premium investment journey today."
           />
 
-          <main className="flex-1 px-4 py-6 md:px-6 lg:px-10 lg:py-8 mb-20 lg:mb-0">
-            <div className="max-w-7xl mx-auto">
+          <main className="flex-1 px-4 py-6 md:px-6 lg:px-10 lg:py-8 mb-20 lg:mb-0 flex justify-center">
+            <div className="w-full max-w-6xl">
               <Outlet />
             </div>
           </main>
