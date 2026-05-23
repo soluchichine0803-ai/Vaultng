@@ -16,14 +16,14 @@ const Badge: React.FC<BadgeProps> = ({
   className = '',
   children,
 }) => {
-  const baseStyles = 'inline-flex items-center justify-center font-semibold rounded-full tracking-wide';
+  const baseStyles = 'inline-flex items-center justify-center font-bold rounded-full tracking-tighter';
 
   const variants = {
-    purple: 'bg-purple-primary/10 text-purple-soft border border-purple-primary/20',
-    success: 'bg-success/10 text-success border border-success/20',
-    warning: 'bg-warning/10 text-warning border border-warning/20',
-    danger: 'bg-danger/10 text-danger border border-danger/20',
-    info: 'bg-info/10 text-info border border-info/20',
+    purple: 'bg-purple-primary/5 text-purple-soft border border-purple-primary/10',
+    success: 'bg-success/5 text-success border border-success/10',
+    warning: 'bg-warning/5 text-warning border border-warning/10',
+    danger: 'bg-danger/5 text-danger border border-danger/10',
+    info: 'bg-info/5 text-info border border-info/10',
   };
 
   const sizes = {

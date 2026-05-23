@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement> {
   label?: string;
@@ -21,12 +21,13 @@ const Input: React.FC<InputProps> = ({
   const baseStyles = 'w-full bg-background-secondary border transition-all duration-200 outline-none px-4 py-3 text-sm rounded-lg text-text-primary placeholder:text-text-muted/50';
 
   const stateStyles = error
-    ? 'border-danger/50 focus:border-danger focus:ring-1 focus:ring-danger/20'
+    ? 'border-danger/30 focus:border-danger/60 focus:ring-1 focus:ring-danger/10'
     : success
-    ? 'border-success/50 focus:border-success focus:ring-1 focus:ring-success/20'
-    : 'border-purple-primary/20 focus:border-purple-primary focus:ring-1 focus:ring-purple-primary/20 focus:shadow-[0_0_15px_rgba(124,58,237,0.1)]';
+    ? 'border-success/30 focus:border-success/60 focus:ring-1 focus:ring-success/10'
+    : 'border-white/5 focus:border-purple-primary/40 focus:ring-1 focus:ring-purple-primary/5 focus:shadow-[0_0_20px_rgba(124,58,237,0.05)]';
 
-  const inputId = id || `input-${Math.random().toString(36).substr(2, 9)}`;
+  const generatedId = useId();
+  const inputId = id || generatedId;
 
   const renderInput = () => {
     switch (variant) {

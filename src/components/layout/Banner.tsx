@@ -30,9 +30,9 @@ const Banner: React.FC<BannerProps> = ({ id, type = 'info', message }) => {
   };
 
   const backgrounds = {
-    info: 'bg-info/10 border-info/20',
-    warning: 'bg-warning/10 border-warning/20',
-    danger: 'bg-danger/10 border-danger/20',
+    info: 'bg-info/[0.03] border-info/10',
+    warning: 'bg-warning/[0.03] border-warning/10',
+    danger: 'bg-danger/[0.03] border-danger/10',
   };
 
   return (
@@ -42,17 +42,17 @@ const Banner: React.FC<BannerProps> = ({ id, type = 'info', message }) => {
           initial={{ height: 0, opacity: 0 }}
           animate={{ height: 'auto', opacity: 1 }}
           exit={{ height: 0, opacity: 0 }}
-          transition={{ duration: 0.3, ease: 'easeInOut' }}
+          transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
           className="overflow-hidden"
         >
-          <div className={`flex items-center gap-3 px-4 py-2.5 border-b ${backgrounds[type]}`}>
-            <div className="flex-shrink-0">{icons[type]}</div>
-            <p className="text-xs font-medium text-text-primary flex-grow">
+          <div className={`flex items-center gap-3 px-4 lg:px-8 py-2 border-b border-white/[0.02] ${backgrounds[type]}`}>
+            <div className="flex-shrink-0 opacity-80">{icons[type]}</div>
+            <p className="text-[11px] font-bold tracking-tight text-text-secondary flex-grow uppercase">
               {message}
             </p>
             <button
               onClick={handleDismiss}
-              className="p-1 hover:bg-white/5 rounded-md text-text-muted transition-colors"
+              className="p-1.5 hover:bg-white/[0.05] rounded-lg text-text-muted transition-colors"
             >
               <X size={14} />
             </button>

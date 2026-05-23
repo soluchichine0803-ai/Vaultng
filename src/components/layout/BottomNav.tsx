@@ -19,33 +19,40 @@ const BottomNav: React.FC = () => {
   ];
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-background-primary/80 backdrop-blur-xl border-t border-purple-primary/10 px-2 pb-safe">
-      <div className="flex items-center justify-around h-16 max-w-md mx-auto">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-background-primary/60 backdrop-blur-2xl border-t border-white/[0.03] px-2 pb-safe">
+      <div className="flex items-center justify-around h-[72px] max-w-md mx-auto">
         {navItems.map((item) => (
           <NavLink
             key={item.path}
             to={item.path}
             className={({ isActive }) => `
-              relative flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors
-              ${isActive ? 'text-purple-primary' : 'text-text-muted hover:text-text-secondary'}
+              relative flex flex-col items-center justify-center flex-1 h-full gap-1.5 transition-all duration-300
+              ${isActive ? 'text-purple-primary' : 'text-text-muted'}
             `}
           >
             {({ isActive }) => (
               <>
                 <motion.span
-                  animate={isActive ? { y: -2, scale: 1.1 } : { y: 0, scale: 1 }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                  animate={isActive ? { y: -4, scale: 1.1 } : { y: 0, scale: 1 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                  className="relative z-10"
                 >
                   {item.icon}
                 </motion.span>
-                <span className="text-[10px] font-bold uppercase tracking-tighter">
+                <span className={`text-[10px] font-black uppercase tracking-tighter transition-opacity duration-300 ${isActive ? 'opacity-100' : 'opacity-60'}`}>
                   {item.label}
                 </span>
                 {isActive && (
-                  <motion.div
-                    layoutId="activeTab"
-                    className="absolute -top-[1px] w-8 h-0.5 bg-purple-primary rounded-full shadow-[0_0_10px_rgba(124,58,237,0.8)]"
-                  />
+                  <>
+                    <motion.div
+                      layoutId="activeTabIndicator"
+                      className="absolute -top-[1px] w-10 h-[2px] bg-purple-primary rounded-full shadow-[0_0_15px_rgba(124,58,237,0.8)]"
+                    />
+                    <motion.div
+                      layoutId="activeTabGlow"
+                      className="absolute inset-0 bg-purple-primary/5 blur-xl rounded-full"
+                    />
+                  </>
                 )}
               </>
             )}
