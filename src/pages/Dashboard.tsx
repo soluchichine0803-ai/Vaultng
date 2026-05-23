@@ -73,38 +73,38 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Desktop Sidebar: Secondary Metrics */}
-        <div className="lg:col-span-4 space-y-4 lg:space-y-5">
-          <Card className="p-5 lg:p-6 space-y-5 border-white/[0.02]">
+        {/* Desktop Supporting Rail: Secondary Metrics */}
+        <div className="lg:col-span-4 flex flex-col gap-3 lg:gap-3.5">
+          <Card className="p-4 lg:p-5 space-y-4 border-white/[0.02] bg-white/[0.01]">
             <div className="flex justify-between items-start">
               <span className="text-[9px] font-black text-text-muted uppercase tracking-[0.2em]">Allocations</span>
-              <TrendingUp size={16} className="text-purple-primary opacity-40" />
+              <TrendingUp size={14} className="text-purple-primary opacity-30" />
             </div>
             <div className="space-y-0.5">
               <div className="flex items-baseline gap-1.5">
-                <AnimatedCounter value={12} decimals={0} className="text-3xl lg:text-4xl font-bold text-white tracking-tight" />
-                <span className="text-[10px] font-black text-text-muted uppercase">Positions</span>
+                <AnimatedCounter value={12} decimals={0} className="text-2xl lg:text-3xl font-bold text-white tracking-tight" />
+                <span className="text-[9px] font-black text-text-muted uppercase">Positions</span>
               </div>
-              <p className="text-[10px] font-bold text-text-muted uppercase tracking-tighter opacity-80">Spread across 4 asset classes</p>
+              <p className="text-[9px] font-bold text-text-muted uppercase tracking-tighter opacity-60">Spread across 4 asset classes</p>
             </div>
-            <div className="pt-1">
-              <Button size="sm" variant="ghost" className="w-full border border-white/[0.05] font-black text-[9px] uppercase tracking-widest h-10 hover:bg-white/[0.01]">
+            <div className="pt-0.5">
+              <Button size="sm" variant="ghost" className="w-full border border-white/[0.04] font-black text-[8px] uppercase tracking-widest h-9 hover:bg-white/[0.02]">
                 Portfolio Analytics
               </Button>
             </div>
           </Card>
 
-          <Card className="hidden lg:block p-5 lg:p-6 space-y-5 border-white/[0.02]">
+          <Card className="hidden lg:block p-4 lg:p-5 space-y-4 border-white/[0.02] bg-white/[0.01]">
             <div className="flex justify-between items-start">
-              <span className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">Infrastructure</span>
-              <Shield size={18} className="text-success opacity-50" />
+              <span className="text-[9px] font-black text-text-muted uppercase tracking-[0.2em]">Infrastructure</span>
+              <Shield size={14} className="text-success opacity-30" />
             </div>
             <div className="space-y-0.5">
-              <h3 className="text-xl lg:text-2xl font-bold text-white tracking-tight">Encrypted</h3>
-              <p className="text-[10px] font-bold text-text-muted uppercase tracking-tighter opacity-80">Biometric verification active</p>
+              <h3 className="text-lg lg:text-xl font-bold text-white tracking-tight">Encrypted</h3>
+              <p className="text-[9px] font-bold text-text-muted uppercase tracking-tighter opacity-60">Biometric verification active</p>
             </div>
-            <div className="pt-1">
-              <Button size="sm" variant="ghost" className="w-full border border-white/[0.05] font-black text-[9px] uppercase tracking-widest h-10 hover:bg-white/[0.01]">
+            <div className="pt-0.5">
+              <Button size="sm" variant="ghost" className="w-full border border-white/[0.04] font-black text-[8px] uppercase tracking-widest h-9 hover:bg-white/[0.02]">
                 Security Node
               </Button>
             </div>
