@@ -24,10 +24,10 @@ const Button: React.FC<ButtonProps> = ({
   const baseStyles = 'relative inline-flex items-center justify-center font-medium transition-colors focus:outline-none disabled:opacity-50 disabled:pointer-events-none rounded-lg overflow-hidden';
 
   const variants = {
-    primary: 'bg-purple-primary text-white hover:bg-purple-bright active:bg-purple-deep hover:shadow-[0_0_20px_rgba(124,58,237,0.4)] active:shadow-none',
-    secondary: 'bg-card border border-purple-primary/10 text-text-primary hover:bg-card-elevated hover:border-purple-primary/30',
-    danger: 'bg-danger text-white hover:opacity-90 active:scale-[0.98]',
-    ghost: 'bg-transparent text-text-secondary hover:bg-purple-primary/10 hover:text-text-primary',
+    primary: 'bg-purple-primary text-white hover:bg-purple-bright active:bg-purple-deep shadow-[0_4px_12px_rgba(124,58,237,0.15)] hover:shadow-[0_4px_24px_rgba(124,58,237,0.4)] transition-shadow duration-300',
+    secondary: 'bg-white/[0.03] border border-white/10 text-text-primary hover:bg-white/[0.06] hover:border-white/20',
+    danger: 'bg-danger/80 text-white hover:bg-danger active:bg-danger-deep transition-colors',
+    ghost: 'bg-transparent text-text-secondary hover:bg-white/[0.05] hover:text-text-primary',
   };
 
   const sizes = {

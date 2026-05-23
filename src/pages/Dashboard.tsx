@@ -24,7 +24,7 @@ const Dashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5">
         {/* Main Column: Dominant Balance Card */}
         <div className="lg:col-span-8 space-y-4 lg:space-y-5">
-          <Card variant="elevated" className="p-6 lg:p-7 space-y-5 lg:space-y-6 border-white/[0.02] bg-gradient-to-br from-card-elevated to-card">
+          <Card variant="elevated" className="p-6 lg:p-7 space-y-5 lg:space-y-6 border-white/[0.03] bg-white/[0.03]">
             <div className="flex justify-between items-start">
               <div className="space-y-1">
                 <span className="text-[10px] lg:text-[11px] font-black text-text-muted uppercase tracking-[0.2em]">Asset Portfolio</span>
@@ -75,7 +75,7 @@ const Dashboard: React.FC = () => {
 
         {/* Desktop Sidebar: Secondary Metrics */}
         <div className="lg:col-span-4 space-y-4 lg:space-y-5">
-          <Card className="p-5 lg:p-6 space-y-5 bg-white/[0.01] border-white/[0.02]">
+          <Card className="p-5 lg:p-6 space-y-5 border-white/[0.02]">
             <div className="flex justify-between items-start">
               <span className="text-[9px] font-black text-text-muted uppercase tracking-[0.2em]">Allocations</span>
               <TrendingUp size={16} className="text-purple-primary opacity-40" />
@@ -94,7 +94,7 @@ const Dashboard: React.FC = () => {
             </div>
           </Card>
 
-          <Card className="hidden lg:block p-5 lg:p-6 space-y-5 bg-white/[0.01] border-white/[0.02]">
+          <Card className="hidden lg:block p-5 lg:p-6 space-y-5 border-white/[0.02]">
             <div className="flex justify-between items-start">
               <span className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em]">Infrastructure</span>
               <Shield size={18} className="text-success opacity-50" />

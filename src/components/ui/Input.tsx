@@ -18,13 +18,13 @@ const Input: React.FC<InputProps> = ({
   id,
   ...props
 }) => {
-  const baseStyles = 'w-full bg-background-secondary border transition-all duration-200 outline-none px-4 py-3 text-sm rounded-lg text-text-primary placeholder:text-text-muted/50';
+  const baseStyles = 'w-full bg-white/[0.02] border transition-all duration-300 outline-none px-4 py-3 text-sm rounded-lg text-text-primary placeholder:text-text-muted/40';
 
   const stateStyles = error
-    ? 'border-danger/30 focus:border-danger/60 focus:ring-1 focus:ring-danger/10'
+    ? 'border-danger/20 focus:border-danger/50 focus:bg-danger/[0.02]'
     : success
-    ? 'border-success/30 focus:border-success/60 focus:ring-1 focus:ring-success/10'
-    : 'border-white/5 focus:border-purple-primary/40 focus:ring-1 focus:ring-purple-primary/5 focus:shadow-[0_0_20px_rgba(124,58,237,0.05)]';
+    ? 'border-success/20 focus:border-success/50 focus:bg-success/[0.02]'
+    : 'border-white/[0.05] focus:border-purple-primary/30 focus:bg-white/[0.04] focus:shadow-[0_0_24px_rgba(124,58,237,0.05)]';
 
   const generatedId = useId();
   const inputId = id || generatedId;

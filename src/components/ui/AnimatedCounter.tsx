@@ -54,11 +54,11 @@ const AnimatedCounter: React.FC<AnimatedCounterProps> = ({
         animate={{
           textShadow: [
             "0 0 0px rgba(124,58,237,0)",
-            "0 0 10px rgba(124,58,237,0.5)",
+            "0 0 8px rgba(124,58,237,0.3)",
             "0 0 0px rgba(124,58,237,0)"
           ]
         }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.8, ease: "easeInOut" }}
       >
         {formatNumber(displayValue)}
       </motion.span>

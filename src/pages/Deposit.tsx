@@ -8,13 +8,13 @@ import Button from '../components/ui/Button';
 const Deposit: React.FC = () => {
   return (
     <motion.div variants={pageTransition} initial="initial" animate="animate" exit="exit" className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-bold">Fund Your Wallet</h1>
-        <p className="text-text-muted text-sm">Add funds securely via our premium payment gateways.</p>
+      <header className="flex flex-col gap-0.5 lg:gap-1">
+        <h1 className="text-lg lg:text-xl font-bold tracking-tight">Deposit Funds</h1>
+        <p className="text-text-muted text-[10px] lg:text-xs font-black opacity-60 uppercase tracking-tighter">Operational: Liquidity Inflow</p>
       </header>
 
-      <div className="max-w-md mx-auto w-full">
-        <Card className="p-8 space-y-6">
+      <div className="max-w-md mx-auto w-full pt-4 lg:pt-8">
+        <Card className="p-6 lg:p-8 space-y-6 border-white/[0.02]">
           <Input
             label="Amount (NGN)"
             type="number"
@@ -32,10 +32,10 @@ const Deposit: React.FC = () => {
           />
 
           <div className="pt-2">
-            <Button className="w-full h-12">Initialize Deposit</Button>
+            <Button className="w-full h-14 font-black uppercase text-xs tracking-widest">Initialize Deposit</Button>
           </div>
 
-          <p className="text-center text-[11px] text-text-muted px-4">
+          <p className="text-center text-[10px] font-bold text-text-muted px-4 opacity-60 uppercase tracking-tight">
             By clicking "Initialize", you agree to our terms of service regarding financial transactions.
           </p>
         </Card>

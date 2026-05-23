@@ -14,38 +14,46 @@ const Referrals: React.FC = () => {
 
   return (
     <motion.div variants={pageTransition} initial="initial" animate="animate" exit="exit" className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-bold">Referral Ecosystem</h1>
-        <p className="text-text-muted text-sm">Expand the VaultNG network and earn premium rewards.</p>
+      <header className="flex flex-col gap-0.5 lg:gap-1">
+        <h1 className="text-lg lg:text-xl font-bold tracking-tight">Partner Network</h1>
+        <p className="text-text-muted text-[10px] lg:text-xs font-black opacity-60 uppercase tracking-tighter">Operational: Network Growth</p>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="p-6 flex flex-col items-center text-center space-y-2 border-purple-primary/5">
-          <Users className="text-purple-primary mb-2" size={32} />
-          <h3 className="font-bold">12</h3>
-          <p className="text-xs text-text-muted">Total Referrals</p>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 lg:gap-4">
+        <Card className="p-5 lg:p-6 flex flex-col items-center text-center space-y-2 border-white/[0.02]">
+          <div className="w-12 h-12 rounded-2xl bg-purple-primary/10 flex items-center justify-center mb-1">
+            <Users className="text-purple-primary" size={24} />
+          </div>
+          <h3 className="text-xl font-bold tracking-tight">12</h3>
+          <p className="text-[10px] font-black text-text-muted uppercase tracking-widest opacity-60">Total Partners</p>
         </Card>
-        <Card className="p-6 flex flex-col items-center text-center space-y-2 border-purple-primary/5">
-          <Award className="text-success mb-2" size={32} />
-          <h3 className="font-bold text-success">₦45,000</h3>
-          <p className="text-xs text-text-muted">Total Commissions</p>
+        <Card className="p-5 lg:p-6 flex flex-col items-center text-center space-y-2 border-white/[0.02]">
+          <div className="w-12 h-12 rounded-2xl bg-success/10 flex items-center justify-center mb-1">
+            <Award className="text-success" size={24} />
+          </div>
+          <h3 className="text-xl font-bold text-success tracking-tight">₦45,000.00</h3>
+          <p className="text-[10px] font-black text-text-muted uppercase tracking-widest opacity-60">Revenue Yield</p>
         </Card>
-        <Card className="p-6 flex flex-col items-center text-center space-y-2 border-purple-primary/5">
-          <Gift className="text-info mb-2" size={32} />
-          <h3 className="font-bold text-info">Elite</h3>
-          <p className="text-xs text-text-muted">Referrer Tier</p>
+        <Card className="p-5 lg:p-6 flex flex-col items-center text-center space-y-2 border-white/[0.02]">
+          <div className="w-12 h-12 rounded-2xl bg-info/10 flex items-center justify-center mb-1">
+            <Gift className="text-info" size={24} />
+          </div>
+          <h3 className="text-xl font-bold text-info tracking-tight">Elite</h3>
+          <p className="text-[10px] font-black text-text-muted uppercase tracking-widest opacity-60">Status Tier</p>
         </Card>
       </div>
 
-      <Card className="p-8 space-y-4">
-        <h3 className="text-lg font-bold">Your Invite Link</h3>
-        <p className="text-sm text-text-muted">Share this link with your network to earn 5% on their first investment.</p>
+      <Card className="p-6 lg:p-8 space-y-4 lg:space-y-5 border-white/[0.02]">
+        <div className="space-y-1">
+          <h3 className="text-sm lg:text-base font-bold tracking-tight">Network Expansion Link</h3>
+          <p className="text-xs lg:text-sm text-text-muted opacity-80">Expand your partner circle to earn protocol yield on their initial commitments.</p>
+        </div>
 
-        <div className="flex gap-2">
-          <div className="flex-1 bg-background-secondary border border-purple-primary/20 rounded-lg px-4 py-3 text-sm font-mono text-purple-soft overflow-hidden whitespace-nowrap">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex-1 bg-white/[0.02] border border-white/[0.05] rounded-lg px-4 py-4 text-xs lg:text-sm font-mono text-purple-soft overflow-hidden whitespace-nowrap">
             vaultng.com/ref/jdoe123
           </div>
-          <Button onClick={copyLink} icon={<Copy size={18} />}>Copy</Button>
+          <Button onClick={copyLink} size="lg" className="h-14 sm:h-auto px-10 font-black uppercase text-[10px] tracking-widest" icon={<Copy size={14} />}>Copy Link</Button>
         </div>
       </Card>
     </motion.div>

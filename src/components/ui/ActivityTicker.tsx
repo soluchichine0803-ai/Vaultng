@@ -36,7 +36,7 @@ const ActivityTicker: React.FC = () => {
   const displayItems = [...items, ...items];
 
   return (
-    <div className="w-full bg-background-secondary border-b border-white/[0.02] overflow-hidden h-9 flex items-center">
+    <div className="w-full bg-white/[0.01] backdrop-blur-md border-b border-white/[0.02] overflow-hidden h-9 flex items-center">
       <motion.div
         animate={{ x: [0, -1000] }}
         transition={{
