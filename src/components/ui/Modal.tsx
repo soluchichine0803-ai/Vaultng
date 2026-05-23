@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { fadeIn, slideUp, scale } from '../../lib/animations';
+import { useWindowSize } from '../../hooks/useWindowSize';
 
 interface ModalProps {
   isOpen: boolean;
@@ -33,6 +34,9 @@ const Modal: React.FC<ModalProps> = ({
     };
   }, [isOpen, onClose]);
 
+  const { width } = useWindowSize();
+  const isMobile = width < 640;
+
   if (typeof document === 'undefined') return null;
 
   return createPortal(
@@ -49,7 +53,7 @@ const Modal: React.FC<ModalProps> = ({
           />
 
           <motion.div
-            variants={window.innerWidth < 640 ? slideUp : scale}
+            variants={isMobile ? slideUp : scale}
             initial="initial"
             animate="animate"
             exit="exit"
