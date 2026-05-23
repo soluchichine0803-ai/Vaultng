@@ -19,12 +19,13 @@ const AppLayout: React.FC = () => {
     <div className="min-h-screen bg-background-primary text-text-primary selection:bg-purple-primary/30 overflow-x-hidden">
       <ParticleBackground />
 
-      <div className="relative z-10 min-h-screen w-full">
+      <div className="relative z-10 min-h-screen w-full flex flex-col">
         {!isMobile && <Sidebar />}
 
-        <div className="flex flex-col min-h-screen w-full">
-          {/* Shell Infrastructure: Spans from Sidebar edge to Right edge on Desktop */}
-          <div className={`w-full transition-all duration-500 ${!isMobile ? 'lg:pl-[200px]' : ''}`}>
+        {/* Main Content Area */}
+        <main className="flex-1 transition-all duration-300 ease-in-out relative z-0 min-h-screen lg:pl-[200px] flex flex-col">
+          {/* Shell Layer: Spans from Sidebar to Right Edge */}
+          <div className="w-full flex flex-col">
             <Header />
             <ActivityTicker />
             <Banner
@@ -34,24 +35,22 @@ const AppLayout: React.FC = () => {
             />
           </div>
 
-          {/* Main Workspace: Centered relative to viewport, transitioning to true center as space permits */}
-          <main className="flex-1 w-full overflow-x-hidden">
-            <div
-              className="w-full max-w-[1320px] px-4 md:px-6 py-6 lg:py-8 mb-20 lg:mb-0 transition-all duration-500"
-              style={!isMobile ? {
-                marginLeft: 'max(240px, (100vw - 1320px) / 2)',
-                marginRight: 'max(40px, (100vw - 1320px) / 2)',
-              } : {
-                marginLeft: 'auto',
-                marginRight: 'auto',
-              }}
-            >
+          {/* Workspace Layer: Centered relative to VIEWPORT where possible */}
+          <div
+            className="flex-1 transition-all duration-300"
+            style={{
+              paddingLeft: isMobile ? '0' : `max(40px, (100vw - 1320px) / 2 - 200px)`,
+              paddingRight: isMobile ? '0' : `max(20px, (100vw - 1320px) / 2)`
+            }}
+          >
+            {/* Centered Content Container */}
+            <div className="max-w-[1320px] mx-auto min-h-full flex flex-col pb-24 lg:pb-8 px-4 lg:px-0 pt-6">
               <Outlet />
             </div>
-          </main>
+          </div>
 
           {isMobile && <BottomNav />}
-        </div>
+        </main>
       </div>
 
       <FloatingSupportButton />

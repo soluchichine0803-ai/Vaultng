@@ -45,7 +45,7 @@ const Banner: React.FC<BannerProps> = ({ id, type = 'info', message }) => {
           transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
           className="overflow-hidden"
         >
-          <div className={`flex items-center gap-3 px-4 lg:px-10 py-2 border-b border-white/[0.02] ${backgrounds[type]}`}>
+          <div className={`flex items-center gap-3 px-4 md:px-6 py-2 border-b border-white/[0.02] ${backgrounds[type]}`}>
             <div className="flex-shrink-0 opacity-80">{icons[type]}</div>
             <p className="text-[11px] font-bold tracking-tight text-text-secondary flex-grow uppercase">
               {message}
