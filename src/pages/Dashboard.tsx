@@ -74,7 +74,7 @@ const Dashboard: React.FC = () => {
         </div>
 
         {/* Desktop Supporting Rail: Secondary Metrics */}
-        <div className="lg:col-span-4 flex flex-col gap-2.5 lg:gap-3 lg:pt-0.5">
+        <div className="lg:col-span-4 flex flex-col gap-2 lg:gap-2.5 lg:pt-0.5">
           <Card className="p-4 lg:p-5 space-y-4 border-white/[0.02] bg-white/[0.01]">
             <div className="flex justify-between items-start">
               <span className="text-[9px] font-black text-text-muted uppercase tracking-[0.2em]">Allocations</span>
