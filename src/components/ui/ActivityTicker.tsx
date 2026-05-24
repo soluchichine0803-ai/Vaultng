@@ -38,7 +38,7 @@ const ActivityTicker: React.FC = () => {
   return (
     <div className="w-full bg-white/[0.01] backdrop-blur-md border-b border-white/[0.04] overflow-hidden h-9 flex items-center">
       <motion.div
-        animate={{ x: [0, -1000] }}
+        animate={{ x: [0, "-50%"] }}
         transition={{
           x: {
             repeat: Infinity,
@@ -46,7 +46,7 @@ const ActivityTicker: React.FC = () => {
             ease: "linear",
           },
         }}
-        className="flex whitespace-nowrap gap-8 pl-8"
+        className="flex whitespace-nowrap gap-8 pl-8 w-max"
       >
         {displayItems.map((item, idx) => (
           <div key={`${item.id}-${idx}`} className="flex items-center gap-2">

@@ -14,9 +14,9 @@ const Dashboard: React.FC = () => {
       initial="initial"
       animate="animate"
       exit="exit"
-      className="space-y-6 lg:space-y-8"
+      className="space-y-4 lg:space-y-6"
     >
-      <header className="flex flex-col gap-0.5 lg:gap-1">
+      <header className="flex flex-col gap-0.5 lg:gap-1 mb-2 lg:mb-1">
         <h1 className="text-lg lg:text-xl font-bold tracking-tight">Welcome back, Investor</h1>
         <p className="text-text-muted text-[10px] lg:text-xs font-black opacity-60 uppercase tracking-tighter">Performance: 12.5% Efficiency Today</p>
       </header>
