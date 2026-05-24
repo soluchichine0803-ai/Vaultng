@@ -20,8 +20,8 @@ const Sidebar: React.FC = () => {
   ];
 
   return (
-    <aside className="hidden lg:flex flex-col w-[200px] bg-background-primary/40 backdrop-blur-xl border-r border-white/[0.03] h-screen fixed left-0 top-0 z-40">
-      <div className="p-4 flex-grow">
+    <aside className="hidden lg:flex flex-col w-[200px] bg-background-primary/40 backdrop-blur-xl border-r border-white/[0.03] h-screen fixed left-0 top-0 z-40 overflow-hidden">
+      <div className="p-4 flex-grow overflow-y-auto scrollbar-hide">
         <nav className="space-y-0.5">
           {navItems.map((item) => (
             <NavLink
@@ -51,7 +51,7 @@ const Sidebar: React.FC = () => {
         </nav>
       </div>
 
-      <div className="mt-auto p-4 space-y-0.5">
+      <div className="mt-auto p-4 space-y-0.5 flex-shrink-0 border-t border-white/[0.03] bg-background-primary/20">
         <button className="flex w-full items-center gap-3 px-4 py-2.5 rounded-xl text-text-muted hover:text-text-primary hover:bg-white/[0.01] transition-all group">
           <Settings size={18} className="group-hover:rotate-45 transition-transform duration-300 opacity-80" />
           <span className="font-bold text-[13px] tracking-tight">Settings</span>
