@@ -6,8 +6,11 @@ import Badge from '../components/ui/Badge';
 import { TrendingUp, ArrowUpRight, Shield, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { pageTransition } from '../lib/animations';
+import { useAuthStore } from '../store/authStore';
 
 const Dashboard: React.FC = () => {
+  const { user } = useAuthStore();
+
   return (
     <motion.div
       variants={pageTransition}
@@ -17,8 +20,10 @@ const Dashboard: React.FC = () => {
       className="space-y-4 lg:space-y-6"
     >
       <header className="flex flex-col gap-0.5 lg:gap-1 mb-2 lg:mb-1">
-        <h1 className="text-lg lg:text-xl font-bold tracking-tight">Welcome back, Investor</h1>
-        <p className="text-text-muted text-[10px] lg:text-xs font-black opacity-60 uppercase tracking-tighter">Performance: 12.5% Efficiency Today</p>
+        <h1 className="text-lg lg:text-xl font-bold tracking-tight">Welcome back, {user?.firstName || 'Investor'}</h1>
+        <p className="text-text-muted text-[10px] lg:text-xs font-black opacity-60 uppercase tracking-tighter">
+          Performance: 12.5% Efficiency Today | Role: <span className="text-purple-soft">{user?.role}</span>
+        </p>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5">
@@ -36,7 +41,11 @@ const Dashboard: React.FC = () => {
             <div className="space-y-1.5">
               <span className="text-[9px] lg:text-[10px] font-bold text-text-muted uppercase tracking-wider">Available Liquidity</span>
               <div className="flex flex-col lg:flex-row lg:items-end gap-1 lg:gap-3">
-                <AnimatedCounter value={42498.74} currency="₦" className="text-4xl lg:text-5xl font-bold tracking-tight text-white" />
+                <AnimatedCounter
+                  value={user?.balance || 0}
+                  currency="₦"
+                  className="text-4xl lg:text-5xl font-bold tracking-tight text-white"
+                />
                 <div className="flex items-center gap-1 text-success text-[10px] font-black uppercase tracking-tighter mb-1 lg:mb-1.5">
                   <ArrowUpRight size={14} strokeWidth={3} />
                   <span>+₦1,240.00 Yield Today</span>
@@ -66,8 +75,8 @@ const Dashboard: React.FC = () => {
                   <TrendingUp size={20} className="text-purple-primary" />
                 </div>
                 <div className="space-y-0.5">
-                  <span className="text-[9px] font-black text-text-muted uppercase tracking-tighter">Performance</span>
-                  <p className="text-xs font-bold text-text-primary">+12.5% Efficiency</p>
+                  <span className="text-[9px] font-black text-text-muted uppercase tracking-tighter">Referral Code</span>
+                  <p className="text-xs font-bold text-text-primary uppercase tracking-widest">{user?.referralCode || 'NONE'}</p>
                 </div>
              </Card>
           </div>
@@ -77,19 +86,18 @@ const Dashboard: React.FC = () => {
         <div className="lg:col-span-4 flex flex-col gap-1 lg:pt-0.5">
           <Card className="p-4 lg:p-5 space-y-4 border-white/[0.02] bg-white/[0.01]">
             <div className="flex justify-between items-start">
-              <span className="text-[9px] font-black text-text-muted uppercase tracking-[0.2em]">Allocations</span>
+              <span className="text-[9px] font-black text-text-muted uppercase tracking-[0.2em]">Referral Link</span>
               <TrendingUp size={14} className="text-purple-primary opacity-30" />
             </div>
             <div className="space-y-0.5">
               <div className="flex items-baseline gap-1.5">
-                <AnimatedCounter value={12} decimals={0} className="text-2xl lg:text-3xl font-bold text-white tracking-tight" />
-                <span className="text-[9px] font-black text-text-muted uppercase">Positions</span>
+                <span className="text-base lg:text-lg font-bold text-white tracking-tight break-all">vaultng.com/ref/{user?.referralCode}</span>
               </div>
-              <p className="text-[9px] font-bold text-text-muted uppercase tracking-tighter opacity-60">Spread across 4 asset classes</p>
+              <p className="text-[9px] font-bold text-text-muted uppercase tracking-tighter opacity-60">Earn commissions for every referral</p>
             </div>
             <div className="pt-0.5">
               <Button size="sm" variant="ghost" className="w-full border border-white/[0.04] font-black text-[8px] uppercase tracking-widest h-9 hover:bg-white/[0.02]">
-                Portfolio Analytics
+                Copy Referral Link
               </Button>
             </div>
           </Card>

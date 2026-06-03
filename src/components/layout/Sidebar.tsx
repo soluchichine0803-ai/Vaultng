@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   TrendingUp,
@@ -9,8 +9,12 @@ import {
   Settings,
   LogOut
 } from 'lucide-react';
+import { useAuthStore } from '../../store/authStore';
 
 const Sidebar: React.FC = () => {
+  const navigate = useNavigate();
+  const { logout } = useAuthStore();
+
   const navItems = [
     { label: 'Dashboard', icon: <LayoutDashboard size={18} />, path: '/dashboard' },
     { label: 'Invest', icon: <TrendingUp size={18} />, path: '/invest' },
@@ -18,6 +22,11 @@ const Sidebar: React.FC = () => {
     { label: 'Withdraw', icon: <ArrowDownCircle size={18} />, path: '/withdraw' },
     { label: 'Referrals', icon: <Users size={18} />, path: '/referrals' },
   ];
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
 
   return (
     <aside className="hidden lg:flex flex-col w-[200px] bg-background-primary/40 backdrop-blur-xl border-r border-white/[0.03] h-screen fixed left-0 top-0 z-40 overflow-hidden">
@@ -56,7 +65,10 @@ const Sidebar: React.FC = () => {
           <Settings size={18} className="group-hover:rotate-45 transition-transform duration-300 opacity-80" />
           <span className="font-bold text-[13px] tracking-tight">Settings</span>
         </button>
-        <button className="flex w-full items-center gap-3 px-4 py-2.5 rounded-xl text-danger/60 hover:text-danger hover:bg-danger/5 transition-all group">
+        <button
+          onClick={handleLogout}
+          className="flex w-full items-center gap-3 px-4 py-2.5 rounded-xl text-danger/60 hover:text-danger hover:bg-danger/5 transition-all group"
+        >
           <LogOut size={18} className="opacity-80" />
           <span className="font-bold text-[13px] tracking-tight">Logout</span>
         </button>
