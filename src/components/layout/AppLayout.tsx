@@ -19,9 +19,9 @@ const AppLayout: React.FC = () => {
     <div className="min-h-screen bg-background-primary text-text-primary selection:bg-purple-primary/30 overflow-x-hidden">
       <ParticleBackground />
 
-      <div className="relative z-10 min-h-screen w-full flex flex-col">
-        {!isMobile && <Sidebar />}
+      {!isMobile && <Sidebar />}
 
+      <div className="relative z-10 min-h-screen w-full flex flex-col">
         {/* Main Content Area */}
         <main className="flex-1 transition-all duration-300 ease-in-out relative z-0 min-h-screen lg:pl-[200px] flex flex-col">
           {/* Shell Layer: Spans from Sidebar to Right Edge */}
