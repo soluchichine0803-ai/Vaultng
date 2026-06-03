@@ -1,8 +1,11 @@
 import React from 'react';
 import { Bell, User, Wallet } from 'lucide-react';
 import AnimatedCounter from '../ui/AnimatedCounter';
+import { useAuthStore } from '../../store/authStore';
 
 const Header: React.FC = () => {
+  const { user } = useAuthStore();
+
   return (
     <header className="sticky top-0 z-40 w-full bg-background-primary/60 backdrop-blur-xl border-b border-white/[0.03] h-14 lg:h-16">
       <div className="h-full px-4 md:px-6 flex items-center justify-between">
@@ -19,7 +22,7 @@ const Header: React.FC = () => {
           <div className="hidden sm:flex items-center gap-2.5 px-3 py-1 bg-white/[0.03] rounded-full border border-white/[0.05]">
             <span className="text-[9px] lg:text-[10px] uppercase font-black text-text-muted tracking-tighter">Vault</span>
             <AnimatedCounter
-              value={12450.75}
+              value={user?.balance || 0}
               currency="₦"
               className="text-xs lg:text-sm font-bold text-purple-soft"
             />
