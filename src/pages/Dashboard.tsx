@@ -20,9 +20,9 @@ const Dashboard: React.FC = () => {
       className="space-y-4 lg:space-y-6"
     >
       <header className="flex flex-col gap-0.5 lg:gap-1 mb-2 lg:mb-1">
-        <h1 className="text-lg lg:text-xl font-bold tracking-tight">Welcome back, {user?.firstName || 'Investor'}</h1>
+        <h1 className="text-lg lg:text-xl font-bold tracking-tight">Welcome back, {user?.username || 'Investor'}</h1>
         <p className="text-text-muted text-[10px] lg:text-xs font-black opacity-60 uppercase tracking-tighter">
-          Performance: 12.5% Efficiency Today | Role: <span className="text-purple-soft">{user?.role}</span>
+          Performance: 0% Efficiency Today | Role: <span className="text-purple-soft">{user?.role}</span>
         </p>
       </header>
 
@@ -48,7 +48,7 @@ const Dashboard: React.FC = () => {
                 />
                 <div className="flex items-center gap-1 text-success text-[10px] font-black uppercase tracking-tighter mb-1 lg:mb-1.5">
                   <ArrowUpRight size={14} strokeWidth={3} />
-                  <span>+₦1,240.00 Yield Today</span>
+                  <span>+₦0.00 Yield Today</span>
                 </div>
               </div>
             </div>

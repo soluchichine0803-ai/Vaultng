@@ -1,17 +1,17 @@
-export type UserRole = 'user' | 'admin';
+export type UserRole = 'USER' | 'ADMIN';
 
 export interface User {
   id: string;
-  firstName: string;
-  lastName: string;
   email: string;
   phone: string;
   username: string;
   role: UserRole;
   balance: number;
   referralCode: string;
+  referredBy?: string | null;
   avatar?: string;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface AuthResponse {

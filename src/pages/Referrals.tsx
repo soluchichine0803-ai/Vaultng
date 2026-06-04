@@ -5,10 +5,14 @@ import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import { Copy, Users, Award, Gift } from 'lucide-react';
 import { toast } from '../store/toastStore';
+import { useAuthStore } from '../store/authStore';
 
 const Referrals: React.FC = () => {
+  const { user } = useAuthStore();
+  const referralLink = `https://vaultng.com/ref/${user?.referralCode || ''}`;
+
   const copyLink = () => {
-    navigator.clipboard.writeText('https://vaultng.com/ref/jdoe123');
+    navigator.clipboard.writeText(referralLink);
     toast.success('Referral link copied to clipboard!');
   };
 
@@ -24,21 +28,21 @@ const Referrals: React.FC = () => {
           <div className="w-12 h-12 rounded-2xl bg-purple-primary/10 flex items-center justify-center mb-1">
             <Users className="text-purple-primary" size={24} />
           </div>
-          <h3 className="text-xl font-bold tracking-tight">12</h3>
+          <h3 className="text-xl font-bold tracking-tight">0</h3>
           <p className="text-[10px] font-black text-text-muted uppercase tracking-widest opacity-60">Total Partners</p>
         </Card>
         <Card className="p-5 lg:p-6 flex flex-col items-center text-center space-y-2 border-white/[0.02]">
           <div className="w-12 h-12 rounded-2xl bg-success/10 flex items-center justify-center mb-1">
             <Award className="text-success" size={24} />
           </div>
-          <h3 className="text-xl font-bold text-success tracking-tight">₦45,000.00</h3>
+          <h3 className="text-xl font-bold text-success tracking-tight">₦0.00</h3>
           <p className="text-[10px] font-black text-text-muted uppercase tracking-widest opacity-60">Revenue Yield</p>
         </Card>
         <Card className="p-5 lg:p-6 flex flex-col items-center text-center space-y-2 border-white/[0.02]">
           <div className="w-12 h-12 rounded-2xl bg-info/10 flex items-center justify-center mb-1">
             <Gift className="text-info" size={24} />
           </div>
-          <h3 className="text-xl font-bold text-info tracking-tight">Elite</h3>
+          <h3 className="text-xl font-bold text-info tracking-tight">Provisional</h3>
           <p className="text-[10px] font-black text-text-muted uppercase tracking-widest opacity-60">Status Tier</p>
         </Card>
       </div>
@@ -51,7 +55,7 @@ const Referrals: React.FC = () => {
 
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex-1 bg-white/[0.02] border border-white/[0.05] rounded-lg px-4 py-4 text-xs lg:text-sm font-mono text-purple-soft overflow-hidden whitespace-nowrap">
-            vaultng.com/ref/jdoe123
+            vaultng.com/ref/{user?.referralCode}
           </div>
           <Button onClick={copyLink} size="lg" className="h-14 sm:h-auto px-10 font-black uppercase text-[10px] tracking-widest" icon={<Copy size={14} />}>Copy Link</Button>
         </div>
