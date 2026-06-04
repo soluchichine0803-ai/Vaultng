@@ -1,0 +1,100 @@
+import type { Response } from 'express';
+import { authService } from '../services/authService';
+import type { AuthRequest } from '../types/auth';
+
+const formatUserResponse = (user: any) => {
+  const { passwordHash, ...userWithoutPassword } = user;
+  return {
+    ...userWithoutPassword,
+    balance: Number(user.balance),
+  };
+};
+
+export const register = async (req: AuthRequest, res: Response) => {
+  try {
+    const { user, token } = await authService.register(req.body);
+    res.status(201).json({
+      status: 'success',
+      data: {
+        user: formatUserResponse(user),
+        token,
+      },
+    });
+  } catch (error: any) {
+    res.status(400).json({
+      status: 'error',
+      message: error.message || 'Registration failed',
+    });
+  }
+};
+
+export const login = async (req: AuthRequest, res: Response) => {
+  try {
+    const { user, token } = await authService.login(req.body);
+    res.status(200).json({
+      status: 'success',
+      data: {
+        user: formatUserResponse(user),
+        token,
+      },
+    });
+  } catch (error: any) {
+    res.status(401).json({
+      status: 'error',
+      message: error.message || 'Login failed',
+    });
+  }
+};
+
+export const getMe = async (req: AuthRequest, res: Response) => {
+  if (!req.user) {
+    return res.status(401).json({
+      status: 'error',
+      message: 'Unauthorized',
+    });
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      user: formatUserResponse(req.user),
+    },
+  });
+};
+
+export const logout = async (req: AuthRequest, res: Response) => {
+  res.status(200).json({
+    status: 'success',
+    message: 'Logged out successfully',
+  });
+};
+
+export const forgotPassword = async (req: AuthRequest, res: Response) => {
+  try {
+    await authService.forgotPassword(req.body.email);
+    res.status(200).json({
+      status: 'success',
+      message: 'If your email is in our system, you will receive a reset link.',
+    });
+  } catch (error: any) {
+    res.status(400).json({
+      status: 'error',
+      message: error.message || 'Forgot password request failed',
+    });
+  }
+};
+
+export const resetPassword = async (req: AuthRequest, res: Response) => {
+  try {
+    await authService.resetPassword(req.body.password);
+    res.status(200).json({
+      status: 'success',
+      message: 'Password reset successfully',
+    });
+  } catch (error: any) {
+    res.status(400).json({
+      status: 'error',
+      message: error.message || 'Password reset failed',
+    });
+  }
+};
