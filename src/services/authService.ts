@@ -1,3 +1,4 @@
+import api from '../lib/api';
 import type {
   LoginCredentials,
   RegisterCredentials,
@@ -5,66 +6,32 @@ import type {
   User
 } from '../types/auth';
 
-// Mock delay to simulate network latency
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-// Mock User Data
-const MOCK_USER: User = {
-  id: 'u123',
-  firstName: 'Demo',
-  lastName: 'User',
-  email: 'demo@example.com',
-  phone: '+2348000000000',
-  username: 'demo_user',
-  role: 'user',
-  balance: 50000,
-  referralCode: 'DEMO123',
-  createdAt: new Date().toISOString(),
-};
-
 export const authService = {
   login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
-    await delay(1000);
-    // For now, any email/password works for the mock
-    if (credentials.email && credentials.password) {
-      return {
-        user: { ...MOCK_USER, email: credentials.email },
-        token: 'mock-jwt-token-' + Math.random().toString(36).substr(2),
-      };
-    }
-    throw new Error('Invalid credentials');
+    const response = await api.post('/auth/login', credentials);
+    return response.data.data;
   },
 
   register: async (data: RegisterCredentials): Promise<AuthResponse> => {
-    await delay(1000);
-    return {
-      user: {
-        ...MOCK_USER,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        email: data.email,
-        phone: data.phone,
-      },
-      token: 'mock-jwt-token-' + Math.random().toString(36).substr(2),
-    };
+    const response = await api.post('/auth/register', data);
+    return response.data.data;
   },
 
   forgotPassword: async (email: string): Promise<void> => {
-    await delay(1000);
-    console.log(`Password reset link requested for: ${email}`);
+    await api.post('/auth/forgot-password', { email });
   },
 
-  resetPassword: async (_password: string, token: string): Promise<void> => {
-    await delay(1000);
-    console.log(`Password reset with token: ${token}`);
+  resetPassword: async (password: string, _token: string): Promise<void> => {
+    // Note: token is currently ignored by backend placeholder
+    await api.post('/auth/reset-password', { password });
   },
 
   getCurrentUser: async (): Promise<User> => {
-    await delay(500);
-    return MOCK_USER;
+    const response = await api.get('/auth/me');
+    return response.data.data.user;
   },
 
   logout: async (): Promise<void> => {
-    await delay(500);
+    await api.post('/auth/logout');
   },
 };

@@ -46,7 +46,6 @@ const Register: React.FC = () => {
         return next;
       });
     }
-    if (error) setError(null);
   };
 
   const validate = () => {

@@ -3,13 +3,20 @@ import Card from '../components/ui/Card';
 import AnimatedCounter from '../components/ui/AnimatedCounter';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
-import { TrendingUp, ArrowUpRight, Shield, Zap } from 'lucide-react';
+import { TrendingUp, ArrowUpRight, Shield, Zap, CheckCircle2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { pageTransition } from '../lib/animations';
 import { useAuthStore } from '../store/authStore';
+import { toast } from '../store/toastStore';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuthStore();
+  const referralUrl = `https://vaultng.com/ref/${user?.referralCode || ''}`;
+
+  const copyReferralLink = () => {
+    navigator.clipboard.writeText(referralUrl);
+    toast.success('Referral link copied to clipboard!');
+  };
 
   return (
     <motion.div
@@ -20,16 +27,16 @@ const Dashboard: React.FC = () => {
       className="space-y-4 lg:space-y-6"
     >
       <header className="flex flex-col gap-0.5 lg:gap-1 mb-2 lg:mb-1">
-        <h1 className="text-lg lg:text-xl font-bold tracking-tight">Welcome back, {user?.firstName || 'Investor'}</h1>
+        <h1 className="text-lg lg:text-xl font-bold tracking-tight">Welcome back, {user?.username || 'Investor'}</h1>
         <p className="text-text-muted text-[10px] lg:text-xs font-black opacity-60 uppercase tracking-tighter">
-          Performance: 12.5% Efficiency Today | Role: <span className="text-purple-soft">{user?.role}</span>
+          Performance: 0% Efficiency Today | Role: <span className="text-purple-soft">{user?.role}</span>
         </p>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5">
         {/* Main Column: Dominant Balance Card */}
         <div className="lg:col-span-8 space-y-4 lg:space-y-5">
-          <Card variant="elevated" className="p-6 lg:p-7 space-y-5 lg:space-y-6 border-white/[0.03] bg-white/[0.03]">
+          <Card variant="elevated" className="p-6 lg:p-7 space-y-5 lg:space-y-6">
             <div className="flex justify-between items-start">
               <div className="space-y-1">
                 <span className="text-[10px] lg:text-[11px] font-black text-text-muted uppercase tracking-[0.2em]">Asset Portfolio</span>
@@ -48,7 +55,7 @@ const Dashboard: React.FC = () => {
                 />
                 <div className="flex items-center gap-1 text-success text-[10px] font-black uppercase tracking-tighter mb-1 lg:mb-1.5">
                   <ArrowUpRight size={14} strokeWidth={3} />
-                  <span>+₦1,240.00 Yield Today</span>
+                  <span>+₦0.00 Yield Today</span>
                 </div>
               </div>
             </div>
@@ -59,9 +66,9 @@ const Dashboard: React.FC = () => {
             </div>
           </Card>
 
-          {/* Mobile-Specific Information Continuity: Security status moved to a subtle horizontal bar on mobile, or just integrated better */}
+          {/* Mobile-Specific Information Continuity */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:hidden">
-             <Card className="p-4 flex items-center gap-4 bg-white/[0.02] border-white/[0.03]">
+             <Card className="p-4 flex items-center gap-4">
                 <div className="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center flex-shrink-0">
                   <Shield size={20} className="text-success" />
                 </div>
@@ -70,7 +77,7 @@ const Dashboard: React.FC = () => {
                   <p className="text-xs font-bold text-text-primary">Encrypted & Active</p>
                 </div>
              </Card>
-             <Card className="p-4 flex items-center gap-4 bg-white/[0.02] border-white/[0.03]">
+             <Card className="p-4 flex items-center gap-4">
                 <div className="w-10 h-10 rounded-xl bg-purple-primary/10 flex items-center justify-center flex-shrink-0">
                   <TrendingUp size={20} className="text-purple-primary" />
                 </div>
@@ -84,7 +91,7 @@ const Dashboard: React.FC = () => {
 
         {/* Desktop Supporting Rail: Secondary Metrics */}
         <div className="lg:col-span-4 flex flex-col gap-1 lg:pt-0.5">
-          <Card className="p-4 lg:p-5 space-y-4 border-white/[0.02] bg-white/[0.01]">
+          <Card className="p-4 lg:p-5 space-y-4">
             <div className="flex justify-between items-start">
               <span className="text-[9px] font-black text-text-muted uppercase tracking-[0.2em]">Referral Link</span>
               <TrendingUp size={14} className="text-purple-primary opacity-30" />
@@ -96,25 +103,35 @@ const Dashboard: React.FC = () => {
               <p className="text-[9px] font-bold text-text-muted uppercase tracking-tighter opacity-60">Earn commissions for every referral</p>
             </div>
             <div className="pt-0.5">
-              <Button size="sm" variant="ghost" className="w-full border border-white/[0.04] font-black text-[8px] uppercase tracking-widest h-9 hover:bg-white/[0.02]">
+              <Button
+                onClick={copyReferralLink}
+                size="sm"
+                variant="ghost"
+                className="w-full border border-white/[0.04] font-black text-[8px] uppercase tracking-widest h-9 hover:bg-white/[0.02]"
+              >
                 Copy Referral Link
               </Button>
             </div>
           </Card>
 
-          <Card className="hidden lg:block p-4 lg:p-5 space-y-4 border-white/[0.02] bg-white/[0.01]">
+          <Card className="hidden lg:block p-4 lg:p-5 space-y-4">
             <div className="flex justify-between items-start">
               <span className="text-[9px] font-black text-text-muted uppercase tracking-[0.2em]">Infrastructure</span>
               <Shield size={14} className="text-success opacity-30" />
             </div>
-            <div className="space-y-0.5">
-              <h3 className="text-lg lg:text-xl font-bold text-white tracking-tight">Encrypted</h3>
-              <p className="text-[9px] font-bold text-text-muted uppercase tracking-tighter opacity-60">Biometric verification active</p>
-            </div>
-            <div className="pt-0.5">
-              <Button size="sm" variant="ghost" className="w-full border border-white/[0.04] font-black text-[8px] uppercase tracking-widest h-9 hover:bg-white/[0.02]">
-                Security Node
-              </Button>
+            <div className="space-y-3 pt-1">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 size={12} className="text-success" />
+                <span className="text-[10px] font-bold text-text-primary tracking-tight">Encrypted Connection</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle2 size={12} className="text-success" />
+                <span className="text-[10px] font-bold text-text-primary tracking-tight">Biometric Verification Active</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle2 size={12} className="text-success" />
+                <span className="text-[10px] font-bold text-text-primary tracking-tight">Vault Network Operational</span>
+              </div>
             </div>
           </Card>
         </div>
@@ -131,7 +148,7 @@ const Dashboard: React.FC = () => {
 
         <div className="grid grid-cols-1 gap-3 lg:gap-4">
           {[1, 2].map((i) => (
-            <Card key={i} hoverable className="p-5 flex items-center justify-between border-white/[0.02] hover:bg-white/[0.01]">
+            <Card key={i} hoverable className="p-5 flex items-center justify-between">
               <div className="space-y-1.5 lg:space-y-2">
                 <div className="flex items-center gap-2.5">
                   <h4 className="text-xs lg:text-sm font-bold tracking-tight">Vault Protocol Alpha {i}</h4>
