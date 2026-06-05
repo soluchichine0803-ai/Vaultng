@@ -3,13 +3,20 @@ import Card from '../components/ui/Card';
 import AnimatedCounter from '../components/ui/AnimatedCounter';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
-import { TrendingUp, ArrowUpRight, Shield, Zap } from 'lucide-react';
+import { TrendingUp, ArrowUpRight, Shield, Zap, CheckCircle2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { pageTransition } from '../lib/animations';
 import { useAuthStore } from '../store/authStore';
+import { toast } from '../store/toastStore';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuthStore();
+  const referralUrl = `https://vaultng.com/ref/${user?.referralCode || ''}`;
+
+  const copyReferralLink = () => {
+    navigator.clipboard.writeText(referralUrl);
+    toast.success('Referral link copied to clipboard!');
+  };
 
   return (
     <motion.div
@@ -96,7 +103,12 @@ const Dashboard: React.FC = () => {
               <p className="text-[9px] font-bold text-text-muted uppercase tracking-tighter opacity-60">Earn commissions for every referral</p>
             </div>
             <div className="pt-0.5">
-              <Button size="sm" variant="ghost" className="w-full border border-white/[0.04] font-black text-[8px] uppercase tracking-widest h-9 hover:bg-white/[0.02]">
+              <Button
+                onClick={copyReferralLink}
+                size="sm"
+                variant="ghost"
+                className="w-full border border-white/[0.04] font-black text-[8px] uppercase tracking-widest h-9 hover:bg-white/[0.02]"
+              >
                 Copy Referral Link
               </Button>
             </div>
@@ -107,14 +119,19 @@ const Dashboard: React.FC = () => {
               <span className="text-[9px] font-black text-text-muted uppercase tracking-[0.2em]">Infrastructure</span>
               <Shield size={14} className="text-success opacity-30" />
             </div>
-            <div className="space-y-0.5">
-              <h3 className="text-lg lg:text-xl font-bold text-white tracking-tight">Encrypted</h3>
-              <p className="text-[9px] font-bold text-text-muted uppercase tracking-tighter opacity-60">Biometric verification active</p>
-            </div>
-            <div className="pt-0.5">
-              <Button size="sm" variant="ghost" className="w-full border border-white/[0.04] font-black text-[8px] uppercase tracking-widest h-9 hover:bg-white/[0.02]">
-                Security Node
-              </Button>
+            <div className="space-y-3 pt-1">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 size={12} className="text-success" />
+                <span className="text-[10px] font-bold text-text-primary tracking-tight">Encrypted Connection</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle2 size={12} className="text-success" />
+                <span className="text-[10px] font-bold text-text-primary tracking-tight">Biometric Verification Active</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle2 size={12} className="text-success" />
+                <span className="text-[10px] font-bold text-text-primary tracking-tight">Vault Network Operational</span>
+              </div>
             </div>
           </Card>
         </div>
