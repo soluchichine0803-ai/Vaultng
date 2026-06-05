@@ -29,7 +29,7 @@ const Dashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5">
         {/* Main Column: Dominant Balance Card */}
         <div className="lg:col-span-8 space-y-4 lg:space-y-5">
-          <Card variant="elevated" className="p-6 lg:p-7 space-y-5 lg:space-y-6 border-white/[0.03] bg-white/[0.03]">
+          <Card variant="elevated" className="p-6 lg:p-7 space-y-5 lg:space-y-6">
             <div className="flex justify-between items-start">
               <div className="space-y-1">
                 <span className="text-[10px] lg:text-[11px] font-black text-text-muted uppercase tracking-[0.2em]">Asset Portfolio</span>
@@ -59,9 +59,9 @@ const Dashboard: React.FC = () => {
             </div>
           </Card>
 
-          {/* Mobile-Specific Information Continuity: Security status moved to a subtle horizontal bar on mobile, or just integrated better */}
+          {/* Mobile-Specific Information Continuity */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:hidden">
-             <Card className="p-4 flex items-center gap-4 bg-white/[0.02] border-white/[0.03]">
+             <Card className="p-4 flex items-center gap-4">
                 <div className="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center flex-shrink-0">
                   <Shield size={20} className="text-success" />
                 </div>
@@ -70,7 +70,7 @@ const Dashboard: React.FC = () => {
                   <p className="text-xs font-bold text-text-primary">Encrypted & Active</p>
                 </div>
              </Card>
-             <Card className="p-4 flex items-center gap-4 bg-white/[0.02] border-white/[0.03]">
+             <Card className="p-4 flex items-center gap-4">
                 <div className="w-10 h-10 rounded-xl bg-purple-primary/10 flex items-center justify-center flex-shrink-0">
                   <TrendingUp size={20} className="text-purple-primary" />
                 </div>
@@ -84,7 +84,7 @@ const Dashboard: React.FC = () => {
 
         {/* Desktop Supporting Rail: Secondary Metrics */}
         <div className="lg:col-span-4 flex flex-col gap-1 lg:pt-0.5">
-          <Card className="p-4 lg:p-5 space-y-4 border-white/[0.02] bg-white/[0.01]">
+          <Card className="p-4 lg:p-5 space-y-4">
             <div className="flex justify-between items-start">
               <span className="text-[9px] font-black text-text-muted uppercase tracking-[0.2em]">Referral Link</span>
               <TrendingUp size={14} className="text-purple-primary opacity-30" />
@@ -102,7 +102,7 @@ const Dashboard: React.FC = () => {
             </div>
           </Card>
 
-          <Card className="hidden lg:block p-4 lg:p-5 space-y-4 border-white/[0.02] bg-white/[0.01]">
+          <Card className="hidden lg:block p-4 lg:p-5 space-y-4">
             <div className="flex justify-between items-start">
               <span className="text-[9px] font-black text-text-muted uppercase tracking-[0.2em]">Infrastructure</span>
               <Shield size={14} className="text-success opacity-30" />
@@ -131,7 +131,7 @@ const Dashboard: React.FC = () => {
 
         <div className="grid grid-cols-1 gap-3 lg:gap-4">
           {[1, 2].map((i) => (
-            <Card key={i} hoverable className="p-5 flex items-center justify-between border-white/[0.02] hover:bg-white/[0.01]">
+            <Card key={i} hoverable className="p-5 flex items-center justify-between">
               <div className="space-y-1.5 lg:space-y-2">
                 <div className="flex items-center gap-2.5">
                   <h4 className="text-xs lg:text-sm font-bold tracking-tight">Vault Protocol Alpha {i}</h4>
