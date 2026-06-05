@@ -9,7 +9,7 @@ import ParticleBackground from '../components/ui/ParticleBackground';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
-  const { login, isLoading, error, setError } = useAuthStore();
+  const { login, isLoading, error } = useAuthStore();
 
   const [formData, setFormData] = useState({
     email: '',
@@ -23,7 +23,6 @@ const Login: React.FC = () => {
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
     }));
-    if (error) setError(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
