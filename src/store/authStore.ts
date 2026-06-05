@@ -40,8 +40,18 @@ export const useAuthStore = create<AuthState>()(
           });
           localStorage.setItem('auth_token', response.token);
         } catch (error: any) {
+          let message = 'Login failed';
+
+          if (error.response?.status === 401) {
+            message = 'Invalid username/email or password. If you don\'t have an account, please register.';
+          } else if (error.response?.data?.message) {
+            message = error.response.data.message;
+          } else if (error.message) {
+            message = error.message;
+          }
+
           set({
-            error: error.message || 'Login failed',
+            error: message,
             isLoading: false,
           });
           throw error;
@@ -52,14 +62,13 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true, error: null });
         try {
           await authService.register(data);
-          // Requirement: Register should redirect to Login, but we also get a token/user here.
-          // According to instructions: "After successful registration: -> redirect to /login"
           set({
             isLoading: false,
           });
         } catch (error: any) {
+          const message = error.response?.data?.message || error.message || 'Registration failed';
           set({
-            error: error.message || 'Registration failed',
+            error: message,
             isLoading: false,
           });
           throw error;
