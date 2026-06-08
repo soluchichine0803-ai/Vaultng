@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import prisma from '../utils/prisma';
-import type { RegisterCredentials, LoginCredentials } from '../../../src/types/auth';
+import type { RegisterCredentials, LoginCredentials } from '../types/shared';
 import type { JWTPayload } from '../types/auth';
 
 const JWT_SECRET = process.env.JWT_SECRET;
