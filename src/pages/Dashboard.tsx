@@ -182,23 +182,26 @@ const Dashboard: React.FC = () => {
                   <p className="text-[10px] font-bold text-text-muted opacity-40 uppercase">No active investments</p>
                 </div>
               ) : (
-                investments.slice(0, 3).map((inv) => (
-                  <div key={inv.id} className="flex items-center justify-between p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.04]">
-                    <div className="space-y-0.5">
-                      <p className="text-[10px] font-bold text-text-primary truncate max-w-[100px]">{inv.plan?.name}</p>
-                      <p className="text-[8px] font-black text-text-muted uppercase tracking-tighter">{formatCurrency(inv.amount)}</p>
+                investments.slice(0, 3).map((inv) => {
+                  const snapshottedROI = ((inv.expectedProfit / inv.amount) * 100).toFixed(1);
+                  return (
+                    <div key={inv.id} className="flex items-center justify-between p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.04]">
+                      <div className="space-y-0.5">
+                        <p className="text-[10px] font-bold text-text-primary truncate max-w-[100px]">{inv.plan?.name}</p>
+                        <p className="text-[8px] font-black text-text-muted uppercase tracking-tighter">{formatCurrency(inv.amount)}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[10px] font-bold text-success">+{snapshottedROI}%</p>
+                        <p className="text-[8px] font-black text-text-muted uppercase tracking-tighter">Yield</p>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-[10px] font-bold text-success">+{inv.plan?.roiPercent}%</p>
-                      <p className="text-[8px] font-black text-text-muted uppercase tracking-tighter">Yield</p>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
 
             {investments.length > 0 && (
-              <Button variant="ghost" size="sm" className="w-full text-[8px] font-black uppercase tracking-widest h-8 border border-white/[0.04] opacity-60">
+              <Button disabled variant="ghost" size="sm" className="w-full text-[8px] font-black uppercase tracking-widest h-8 border border-white/[0.04] opacity-40">
                 View Full Portfolio
               </Button>
             )}
