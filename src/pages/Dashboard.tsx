@@ -220,7 +220,7 @@ const Dashboard: React.FC = () => {
           </Card>
         ) : (
           <div className="grid grid-cols-1 gap-3 lg:gap-4">
-            {plans.map((plan) => (
+            {plans.slice(0, 3).map((plan) => (
               <Card key={plan.id} hoverable className="p-5 flex items-center justify-between">
                 <div className="space-y-1.5 lg:space-y-2">
                   <div className="flex items-center gap-2.5">
@@ -241,7 +241,14 @@ const Dashboard: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                <Button size="sm" variant="secondary" className="px-5 font-bold h-10 lg:h-11 border-white/[0.05] text-[10px] uppercase tracking-widest">Details</Button>
+                <Button
+                  disabled
+                  size="sm"
+                  variant="secondary"
+                  className="px-5 font-bold h-10 lg:h-11 border-white/[0.05] text-[10px] uppercase tracking-widest"
+                >
+                  Details
+                </Button>
               </Card>
             ))}
           </div>
