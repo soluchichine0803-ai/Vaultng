@@ -1,17 +1,65 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Card from '../components/ui/Card';
 import AnimatedCounter from '../components/ui/AnimatedCounter';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
-import { TrendingUp, ArrowUpRight, Shield, Zap, CheckCircle2 } from 'lucide-react';
+import { TrendingUp, ArrowUpRight, Shield, Zap, CheckCircle2, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { pageTransition } from '../lib/animations';
 import { useAuthStore } from '../store/authStore';
 import { toast } from '../store/toastStore';
+import { planService } from '../services/planService';
+import type { InvestmentPlan } from '../types/plan';
+import { formatCurrency, formatDuration } from '../utils/formatters';
+
+const PlanSkeleton: React.FC = () => (
+  <div className="grid grid-cols-1 gap-3 lg:gap-4">
+    {[1, 2, 3].map((i) => (
+      <Card key={i} className="p-5 flex items-center justify-between">
+        <div className="space-y-3 w-full max-w-[200px]">
+          <div className="h-4 bg-white/5 rounded-full w-2/3 animate-pulse" />
+          <div className="flex gap-4">
+            <div className="space-y-1 w-12">
+              <div className="h-2 bg-white/5 rounded-full w-full animate-pulse" />
+              <div className="h-3 bg-white/5 rounded-full w-2/3 animate-pulse" />
+            </div>
+            <div className="space-y-1 w-12">
+              <div className="h-2 bg-white/5 rounded-full w-full animate-pulse" />
+              <div className="h-3 bg-white/5 rounded-full w-2/3 animate-pulse" />
+            </div>
+          </div>
+        </div>
+        <div className="w-24 h-10 lg:h-11 bg-white/5 rounded-lg animate-pulse" />
+      </Card>
+    ))}
+  </div>
+);
 
 const Dashboard: React.FC = () => {
   const { user } = useAuthStore();
+  const [plans, setPlans] = useState<InvestmentPlan[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const referralUrl = `https://vaultng.com/ref/${user?.referralCode || ''}`;
+
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        setIsLoading(true);
+        const data = await planService.getPlans();
+        setPlans(data);
+        setError(null);
+      } catch (err) {
+        console.error('Failed to fetch plans:', err);
+        setError('Unable to load investment plans. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPlans();
+  }, []);
 
   const copyReferralLink = () => {
     navigator.clipboard.writeText(referralUrl);
@@ -49,7 +97,7 @@ const Dashboard: React.FC = () => {
               <span className="text-[9px] lg:text-[10px] font-bold text-text-muted uppercase tracking-wider">Available Liquidity</span>
               <div className="flex flex-col lg:flex-row lg:items-end gap-1 lg:gap-3">
                 <AnimatedCounter
-                  value={user?.balance || 0}
+                  value={Number(user?.balance) || 0}
                   currency="₦"
                   className="text-4xl lg:text-5xl font-bold tracking-tight text-white"
                 />
@@ -146,30 +194,65 @@ const Dashboard: React.FC = () => {
           <Button variant="ghost" size="sm" className="text-[9px] font-black uppercase tracking-widest text-purple-soft">View Market</Button>
         </div>
 
-        <div className="grid grid-cols-1 gap-3 lg:gap-4">
-          {[1, 2].map((i) => (
-            <Card key={i} hoverable className="p-5 flex items-center justify-between">
-              <div className="space-y-1.5 lg:space-y-2">
-                <div className="flex items-center gap-2.5">
-                  <h4 className="text-xs lg:text-sm font-bold tracking-tight">Vault Protocol Alpha {i}</h4>
-                  <Badge variant="purple" size="sm" className="text-[7px] px-2 py-0">Featured</Badge>
-                </div>
-                <div className="flex items-center gap-4 lg:gap-8">
-                  <div className="space-y-0.5">
-                    <p className="text-[8px] font-black uppercase tracking-tighter text-text-muted">Yield</p>
-                    <p className="text-[11px] font-bold text-success">15.00%</p>
+        {isLoading ? (
+          <PlanSkeleton />
+        ) : error ? (
+          <Card className="p-10 flex flex-col items-center justify-center text-center space-y-4 border-dashed border-white/10">
+            <div className="w-12 h-12 rounded-full bg-danger/10 flex items-center justify-center">
+              <AlertCircle size={24} className="text-danger" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-bold text-text-primary">{error}</p>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-[10px] font-black uppercase tracking-widest text-purple-soft"
+                onClick={() => window.location.reload()}
+              >
+                Retry Connection
+              </Button>
+            </div>
+          </Card>
+        ) : plans.length === 0 ? (
+          <Card className="p-10 flex flex-col items-center justify-center text-center space-y-3 border-dashed border-white/10">
+            <Zap size={32} className="text-text-muted opacity-20" />
+            <p className="text-sm font-medium text-text-muted">No investment plans are currently available.</p>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 gap-3 lg:gap-4">
+            {plans.slice(0, 3).map((plan) => (
+              <Card key={plan.id} hoverable className="p-5 flex items-center justify-between">
+                <div className="space-y-1.5 lg:space-y-2">
+                  <div className="flex items-center gap-2.5">
+                    <h4 className="text-xs lg:text-sm font-bold tracking-tight">{plan.name}</h4>
+                    <span className="text-[9px] font-medium text-text-muted opacity-50">
+                      {formatCurrency(plan.minAmount)} - {formatCurrency(plan.maxAmount)}
+                    </span>
                   </div>
-                  <div className="w-px h-5 bg-white/5" />
-                  <div className="space-y-0.5">
-                    <p className="text-[8px] font-black uppercase tracking-tighter text-text-muted">Cycle</p>
-                    <p className="text-[11px] font-bold text-text-primary">30D</p>
+                  <div className="flex items-center gap-4 lg:gap-8">
+                    <div className="space-y-0.5">
+                      <p className="text-[8px] font-black uppercase tracking-tighter text-text-muted">ROI Yield</p>
+                      <p className="text-[11px] font-bold text-success">{plan.roiPercent.toFixed(2)}%</p>
+                    </div>
+                    <div className="w-px h-5 bg-white/5" />
+                    <div className="space-y-0.5">
+                      <p className="text-[8px] font-black uppercase tracking-tighter text-text-muted">Duration</p>
+                      <p className="text-[11px] font-bold text-text-primary">{formatDuration(plan.durationHours)}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <Button size="sm" variant="secondary" className="px-5 font-bold h-10 lg:h-11 border-white/[0.05] text-[10px] uppercase tracking-widest">Details</Button>
-            </Card>
-          ))}
-        </div>
+                <Button
+                  disabled
+                  size="sm"
+                  variant="secondary"
+                  className="px-5 font-bold h-10 lg:h-11 border-white/[0.05] text-[10px] uppercase tracking-widest"
+                >
+                  Details
+                </Button>
+              </Card>
+            ))}
+          </div>
+        )}
       </section>
     </motion.div>
   );

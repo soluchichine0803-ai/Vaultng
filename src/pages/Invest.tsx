@@ -1,10 +1,62 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { pageTransition } from '../lib/animations';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
+import { AlertCircle, Zap } from 'lucide-react';
+import { planService } from '../services/planService';
+import type { InvestmentPlan } from '../types/plan';
+import { formatCurrency, formatDuration } from '../utils/formatters';
+
+const InvestSkeleton: React.FC = () => (
+  <div className="grid grid-cols-1 gap-3 lg:gap-4">
+    {[1, 2, 3, 4].map((i) => (
+      <Card key={i} className="p-5 lg:p-6 border-white/[0.02]">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-4 w-full max-w-md">
+            <div className="h-6 bg-white/5 rounded-full w-1/2 animate-pulse" />
+            <div className="h-4 bg-white/5 rounded-full w-full animate-pulse" />
+            <div className="flex gap-6">
+              <div className="space-y-2 w-24">
+                <div className="h-2 bg-white/5 rounded-full w-full animate-pulse" />
+                <div className="h-4 bg-white/5 rounded-full w-2/3 animate-pulse" />
+              </div>
+              <div className="space-y-2 w-24">
+                <div className="h-2 bg-white/5 rounded-full w-full animate-pulse" />
+                <div className="h-4 bg-white/5 rounded-full w-2/3 animate-pulse" />
+              </div>
+            </div>
+          </div>
+          <div className="w-full md:w-32 h-12 bg-white/5 rounded-lg animate-pulse" />
+        </div>
+      </Card>
+    ))}
+  </div>
+);
 
 const Invest: React.FC = () => {
+  const [plans, setPlans] = useState<InvestmentPlan[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        setIsLoading(true);
+        const data = await planService.getPlans();
+        setPlans(data);
+        setError(null);
+      } catch (err) {
+        console.error('Failed to fetch plans:', err);
+        setError('Unable to load investment plans. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPlans();
+  }, []);
+
   return (
     <motion.div variants={pageTransition} initial="initial" animate="animate" exit="exit" className="space-y-6">
       <header className="flex flex-col gap-0.5 lg:gap-1">
@@ -12,34 +64,64 @@ const Invest: React.FC = () => {
         <p className="text-text-muted text-[10px] lg:text-xs font-black opacity-60 uppercase tracking-tighter">Operational: Active Market Channels</p>
       </header>
 
-      <div className="grid grid-cols-1 gap-3 lg:gap-4">
-        {[1, 2, 3].map((i) => (
-          <Card key={i} className="p-5 lg:p-6 border-white/[0.02]">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="space-y-3">
-                <div className="flex items-center gap-2.5">
-                  <h3 className="text-sm lg:text-base font-bold tracking-tight">Vault Protocol Delta {i}</h3>
-                  <span className="px-2 py-0.5 bg-purple-primary/10 text-purple-soft text-[9px] font-black rounded uppercase tracking-widest border border-purple-primary/10">High Yield</span>
-                </div>
-                <p className="text-xs lg:text-sm text-text-muted max-w-md leading-relaxed opacity-80">
-                  Precision yield optimization through structured vault protocols and liquidity aggregation.
-                </p>
-                <div className="flex gap-6 lg:gap-8 pt-1">
-                  <div>
-                    <p className="text-[9px] uppercase font-black text-text-muted tracking-widest">Min. Commitment</p>
-                    <p className="font-mono text-xs lg:text-sm font-bold text-text-primary">₦50,000.00</p>
+      {isLoading ? (
+        <InvestSkeleton />
+      ) : error ? (
+        <Card className="p-10 flex flex-col items-center justify-center text-center space-y-4 border-dashed border-white/10">
+          <div className="w-12 h-12 rounded-full bg-danger/10 flex items-center justify-center">
+            <AlertCircle size={24} className="text-danger" />
+          </div>
+          <div className="space-y-1">
+            <p className="text-sm font-bold text-text-primary">{error}</p>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-[10px] font-black uppercase tracking-widest text-purple-soft"
+              onClick={() => window.location.reload()}
+            >
+              Retry Connection
+            </Button>
+          </div>
+        </Card>
+      ) : plans.length === 0 ? (
+        <Card className="p-10 flex flex-col items-center justify-center text-center space-y-3 border-dashed border-white/10">
+          <Zap size={32} className="text-text-muted opacity-20" />
+          <p className="text-sm font-medium text-text-muted">No investment plans are currently available.</p>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 gap-3 lg:gap-4">
+          {plans.map((plan) => (
+            <Card key={plan.id} className="p-5 lg:p-6 border-white/[0.02]">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2.5">
+                    <h3 className="text-sm lg:text-base font-bold tracking-tight">{plan.name} Protocol</h3>
+                    <span className="px-2 py-0.5 bg-success/10 text-success text-[9px] font-black rounded uppercase tracking-widest border border-success/10">
+                      {plan.roiPercent.toFixed(1)}% ROI
+                    </span>
                   </div>
-                  <div>
-                    <p className="text-[9px] uppercase font-black text-text-muted tracking-widest">Cycle</p>
-                    <p className="font-mono text-xs lg:text-sm font-bold text-text-primary">60 Days</p>
+                  <p className="text-xs lg:text-sm text-text-muted max-w-md leading-relaxed opacity-80">
+                    Precision yield optimization through structured {plan.name.toLowerCase()} protocols and liquidity aggregation over a {formatDuration(plan.durationHours).toLowerCase()} cycle.
+                  </p>
+                  <div className="flex gap-6 lg:gap-8 pt-1">
+                    <div>
+                      <p className="text-[9px] uppercase font-black text-text-muted tracking-widest">Commitment Range</p>
+                      <p className="font-mono text-xs lg:text-sm font-bold text-text-primary">
+                        {formatCurrency(plan.minAmount)} - {formatCurrency(plan.maxAmount)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] uppercase font-black text-text-muted tracking-widest">Duration</p>
+                      <p className="font-mono text-xs lg:text-sm font-bold text-text-primary">{formatDuration(plan.durationHours)}</p>
+                    </div>
                   </div>
                 </div>
+                <Button disabled className="w-full md:w-auto h-12 px-8 font-black uppercase text-[10px] tracking-widest">Invest Now</Button>
               </div>
-              <Button className="w-full md:w-auto h-12 px-8 font-black uppercase text-[10px] tracking-widest">Invest Now</Button>
-            </div>
-          </Card>
-        ))}
-      </div>
+            </Card>
+          ))}
+        </div>
+      )}
     </motion.div>
   );
 };
