@@ -9,8 +9,11 @@ import { pageTransition } from '../lib/animations';
 import { useAuthStore } from '../store/authStore';
 import { toast } from '../store/toastStore';
 import { planService } from '../services/planService';
+import { investmentService } from '../services/investmentService';
 import type { InvestmentPlan } from '../types/plan';
+import type { Investment } from '../types/investment';
 import { formatCurrency, formatDuration } from '../utils/formatters';
+import InvestmentModal from '../components/InvestmentModal';
 
 const PlanSkeleton: React.FC = () => (
   <div className="grid grid-cols-1 gap-3 lg:gap-4">
@@ -38,32 +41,55 @@ const PlanSkeleton: React.FC = () => (
 const Dashboard: React.FC = () => {
   const { user } = useAuthStore();
   const [plans, setPlans] = useState<InvestmentPlan[]>([]);
+  const [investments, setInvestments] = useState<Investment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isInvestmentsLoading, setIsInvestmentsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [selectedPlan, setSelectedPlan] = useState<InvestmentPlan | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const referralUrl = `https://vaultng.com/ref/${user?.referralCode || ''}`;
 
-  useEffect(() => {
-    const fetchPlans = async () => {
-      try {
-        setIsLoading(true);
-        const data = await planService.getPlans();
-        setPlans(data);
-        setError(null);
-      } catch (err) {
-        console.error('Failed to fetch plans:', err);
-        setError('Unable to load investment plans. Please try again.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetchPlans = async () => {
+    try {
+      setIsLoading(true);
+      const data = await planService.getPlans();
+      setPlans(data);
+      setError(null);
+    } catch (err) {
+      console.error('Failed to fetch plans:', err);
+      setError('Unable to load investment plans. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  const fetchInvestments = async () => {
+    try {
+      setIsInvestmentsLoading(true);
+      const data = await investmentService.getInvestments();
+      setInvestments(data);
+    } catch (err) {
+      console.error('Failed to fetch investments:', err);
+    } finally {
+      setIsInvestmentsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchPlans();
+    fetchInvestments();
   }, []);
 
   const copyReferralLink = () => {
     navigator.clipboard.writeText(referralUrl);
     toast.success('Referral link copied to clipboard!');
+  };
+
+  const handleInvestClick = (plan: InvestmentPlan) => {
+    setSelectedPlan(plan);
+    setIsModalOpen(true);
   };
 
   return (
@@ -139,6 +165,48 @@ const Dashboard: React.FC = () => {
 
         {/* Desktop Supporting Rail: Secondary Metrics */}
         <div className="lg:col-span-4 flex flex-col gap-1 lg:pt-0.5">
+          {/* My Investments Section */}
+          <Card className="p-4 lg:p-5 space-y-4">
+            <div className="flex justify-between items-start">
+              <span className="text-[9px] font-black text-text-muted uppercase tracking-[0.2em]">Active Portfolio</span>
+              <Badge variant="purple" size="sm" className="text-[8px] px-1.5 py-0">LIVE</Badge>
+            </div>
+
+            <div className="space-y-2.5">
+              {isInvestmentsLoading ? (
+                [1, 2].map((i) => (
+                  <div key={i} className="h-10 bg-white/5 rounded-lg animate-pulse" />
+                ))
+              ) : investments.length === 0 ? (
+                <div className="py-2 text-center">
+                  <p className="text-[10px] font-bold text-text-muted opacity-40 uppercase">No active investments</p>
+                </div>
+              ) : (
+                investments.slice(0, 3).map((inv) => {
+                  const snapshottedROI = ((inv.expectedProfit / inv.amount) * 100).toFixed(1);
+                  return (
+                    <div key={inv.id} className="flex items-center justify-between p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.04]">
+                      <div className="space-y-0.5">
+                        <p className="text-[10px] font-bold text-text-primary truncate max-w-[100px]">{inv.plan?.name}</p>
+                        <p className="text-[8px] font-black text-text-muted uppercase tracking-tighter">{formatCurrency(inv.amount)}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[10px] font-bold text-success">+{snapshottedROI}%</p>
+                        <p className="text-[8px] font-black text-text-muted uppercase tracking-tighter">Yield</p>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {investments.length > 0 && (
+              <Button disabled variant="ghost" size="sm" className="w-full text-[8px] font-black uppercase tracking-widest h-8 border border-white/[0.04] opacity-40">
+                View Full Portfolio
+              </Button>
+            )}
+          </Card>
+
           <Card className="p-4 lg:p-5 space-y-4">
             <div className="flex justify-between items-start">
               <span className="text-[9px] font-black text-text-muted uppercase tracking-[0.2em]">Referral Link</span>
@@ -242,7 +310,7 @@ const Dashboard: React.FC = () => {
                   </div>
                 </div>
                 <Button
-                  disabled
+                  onClick={() => handleInvestClick(plan)}
                   size="sm"
                   variant="secondary"
                   className="px-5 font-bold h-10 lg:h-11 border-white/[0.05] text-[10px] uppercase tracking-widest"
@@ -254,6 +322,13 @@ const Dashboard: React.FC = () => {
           </div>
         )}
       </section>
+
+      <InvestmentModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        plan={selectedPlan}
+        onSuccess={fetchInvestments}
+      />
     </motion.div>
   );
 };

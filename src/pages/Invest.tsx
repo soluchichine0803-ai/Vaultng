@@ -7,6 +7,7 @@ import { AlertCircle, Zap } from 'lucide-react';
 import { planService } from '../services/planService';
 import type { InvestmentPlan } from '../types/plan';
 import { formatCurrency, formatDuration } from '../utils/formatters';
+import InvestmentModal from '../components/InvestmentModal';
 
 const InvestSkeleton: React.FC = () => (
   <div className="grid grid-cols-1 gap-3 lg:gap-4">
@@ -39,23 +40,31 @@ const Invest: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchPlans = async () => {
-      try {
-        setIsLoading(true);
-        const data = await planService.getPlans();
-        setPlans(data);
-        setError(null);
-      } catch (err) {
-        console.error('Failed to fetch plans:', err);
-        setError('Unable to load investment plans. Please try again.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const [selectedPlan, setSelectedPlan] = useState<InvestmentPlan | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
+  const fetchPlans = async () => {
+    try {
+      setIsLoading(true);
+      const data = await planService.getPlans();
+      setPlans(data);
+      setError(null);
+    } catch (err) {
+      console.error('Failed to fetch plans:', err);
+      setError('Unable to load investment plans. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchPlans();
   }, []);
+
+  const handleInvestClick = (plan: InvestmentPlan) => {
+    setSelectedPlan(plan);
+    setIsModalOpen(true);
+  };
 
   return (
     <motion.div variants={pageTransition} initial="initial" animate="animate" exit="exit" className="space-y-6">
@@ -116,12 +125,27 @@ const Invest: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                <Button disabled className="w-full md:w-auto h-12 px-8 font-black uppercase text-[10px] tracking-widest">Invest Now</Button>
+                <Button
+                  onClick={() => handleInvestClick(plan)}
+                  className="w-full md:w-auto h-12 px-8 font-black uppercase text-[10px] tracking-widest"
+                >
+                  Invest Now
+                </Button>
               </div>
             </Card>
           ))}
         </div>
       )}
+
+      <InvestmentModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        plan={selectedPlan}
+        onSuccess={() => {
+          // In a real app, we might refresh balances or investments here.
+          // For now, just being consistent.
+        }}
+      />
     </motion.div>
   );
 };
