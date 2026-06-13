@@ -43,6 +43,7 @@ const InvestmentModal: React.FC<InvestmentModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     setError(null);
 
     const investmentAmount = Number(amount);

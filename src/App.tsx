@@ -5,6 +5,7 @@ import Invest from './pages/Invest';
 import Deposit from './pages/Deposit';
 import Withdraw from './pages/Withdraw';
 import Referrals from './pages/Referrals';
+import Portfolio from './pages/Portfolio';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
@@ -53,6 +54,7 @@ function App() {
           <Route path="deposit" element={<Deposit />} />
           <Route path="withdraw" element={<Withdraw />} />
           <Route path="referrals" element={<Referrals />} />
+          <Route path="portfolio" element={<Portfolio />} />
           {/* Add Profile route when ready */}
         </Route>
 

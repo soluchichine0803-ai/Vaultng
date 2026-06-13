@@ -96,17 +96,19 @@ model InvestmentPlan {
 }
 
 model Investment {
-  id             String           @id @default(uuid())
-  userId         String
-  planId         String
-  amount         Decimal          @db.Decimal(15, 2)
-  expectedProfit Decimal          @db.Decimal(15, 2)
-  maturityDate   DateTime
-  status         InvestmentStatus @default(ACTIVE)
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  id                    String           @id @default(uuid())
+  userId                String
+  planId                String
+  amount                Decimal          @db.Decimal(15, 2)
+  expectedProfit        Decimal          @db.Decimal(15, 2)
+  roiPercentSnapshot    Decimal          @db.Decimal(5, 2)
+  durationHoursSnapshot Int
+  maturityDate          DateTime
+  status                InvestmentStatus @default(ACTIVE)
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
 
-  user           User             @relation(fields: [userId], references: [id])
+  user                  User             @relation(fields: [userId], references: [id])
   plan           InvestmentPlan   @relation(fields: [planId], references: [id])
 
   @@index([userId])

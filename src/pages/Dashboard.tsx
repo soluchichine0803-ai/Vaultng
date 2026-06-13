@@ -201,7 +201,7 @@ const Dashboard: React.FC = () => {
             </div>
 
             {investments.length > 0 && (
-              <Button disabled variant="ghost" size="sm" className="w-full text-[8px] font-black uppercase tracking-widest h-8 border border-white/[0.04] opacity-40">
+              <Button href="/portfolio" variant="ghost" size="sm" className="w-full text-[8px] font-black uppercase tracking-widest h-8 border border-white/[0.04] hover:bg-white/[0.02]">
                 View Full Portfolio
               </Button>
             )}
@@ -253,7 +253,7 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      <section className="space-y-4 lg:space-y-5 lg:w-2/3">
+      <section className="space-y-3 lg:space-y-4 lg:w-2/3">
         <div className="flex items-center justify-between">
           <h2 className="text-sm lg:text-base font-bold flex items-center gap-2 tracking-tight">
             <Zap size={16} className="text-purple-primary fill-purple-primary/20" />
@@ -287,7 +287,7 @@ const Dashboard: React.FC = () => {
             <p className="text-sm font-medium text-text-muted">No investment plans are currently available.</p>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 gap-3 lg:gap-4">
+          <div className="grid grid-cols-1 gap-2.5 lg:gap-3">
             {plans.slice(0, 3).map((plan) => (
               <Card key={plan.id} hoverable className="p-5 flex items-center justify-between">
                 <div className="space-y-1.5 lg:space-y-2">
