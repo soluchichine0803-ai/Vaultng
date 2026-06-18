@@ -46,7 +46,7 @@ const Invest: React.FC = () => {
   const fetchPlans = async () => {
     try {
       setIsLoading(true);
-      const data = await planService.getPlans();
+      const data = await planService.getAllPlans();
       setPlans(data);
       setError(null);
     } catch (err) {
@@ -100,7 +100,7 @@ const Invest: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 gap-3 lg:gap-4">
           {plans.map((plan) => (
-            <Card key={plan.id} className="p-5 lg:p-6 border-white/[0.02]">
+            <Card key={plan.id} className={`p-5 lg:p-6 border-white/[0.02] ${!plan.active ? 'opacity-50' : ''}`}>
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="space-y-3">
                   <div className="flex items-center gap-2.5">
@@ -108,6 +108,11 @@ const Invest: React.FC = () => {
                     <span className="px-2 py-0.5 bg-success/10 text-success text-[9px] font-black rounded uppercase tracking-widest border border-success/10">
                       {plan.roiPercent.toFixed(1)}% ROI
                     </span>
+                    {!plan.active && (
+                      <span className="px-2 py-0.5 bg-white/5 text-text-muted text-[9px] font-black rounded uppercase tracking-widest border border-white/10">
+                        Unavailable
+                      </span>
+                    )}
                   </div>
                   <p className="text-xs lg:text-sm text-text-muted max-w-md leading-relaxed opacity-80">
                     Precision yield optimization through structured {plan.name.toLowerCase()} protocols and liquidity aggregation over a {formatDuration(plan.durationHours).toLowerCase()} cycle.
@@ -127,9 +132,10 @@ const Invest: React.FC = () => {
                 </div>
                 <Button
                   onClick={() => handleInvestClick(plan)}
+                  disabled={!plan.active}
                   className="w-full md:w-auto h-12 px-8 font-black uppercase text-[10px] tracking-widest"
                 >
-                  Invest Now
+                  {plan.active ? 'Invest Now' : 'Closed'}
                 </Button>
               </div>
             </Card>

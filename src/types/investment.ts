@@ -6,6 +6,8 @@ export interface Investment {
   planId: string;
   amount: number;
   expectedProfit: number;
+  roiPercentSnapshot: number;
+  durationHoursSnapshot: number;
   maturityDate: string;
   status: InvestmentStatus;
   createdAt: string;

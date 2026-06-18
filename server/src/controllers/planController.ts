@@ -33,6 +33,35 @@ export const getPlans = async (req: Request, res: Response) => {
   }
 };
 
+export const getAllPlans = async (req: Request, res: Response) => {
+  try {
+    const plans = await prisma.investmentPlan.findMany({
+      orderBy: {
+        displayOrder: 'asc',
+      },
+    });
+
+    // Convert Decimal values to numbers for frontend compatibility
+    const formattedPlans = plans.map((plan) => ({
+      ...plan,
+      minAmount: Number(plan.minAmount),
+      maxAmount: Number(plan.maxAmount),
+      roiPercent: Number(plan.roiPercent),
+    }));
+
+    res.status(200).json({
+      status: 'success',
+      data: formattedPlans,
+    });
+  } catch (error) {
+    console.error('Error fetching all plans:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch all investment plans',
+    });
+  }
+};
+
 export const getPlanById = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;

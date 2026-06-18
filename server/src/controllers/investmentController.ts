@@ -69,6 +69,8 @@ export const createInvestment = async (req: AuthRequest, res: Response) => {
         planId,
         amount: investmentAmount,
         expectedProfit,
+        roiPercentSnapshot: Number(plan.roiPercent),
+        durationHoursSnapshot: plan.durationHours,
         maturityDate,
         status: InvestmentStatus.ACTIVE,
       },
@@ -130,6 +132,7 @@ export const getMyInvestments = async (req: AuthRequest, res: Response) => {
       ...inv,
       amount: Number(inv.amount),
       expectedProfit: Number(inv.expectedProfit),
+      roiPercentSnapshot: Number(inv.roiPercentSnapshot),
       plan: {
         ...inv.plan,
         roiPercent: Number(inv.plan.roiPercent),
