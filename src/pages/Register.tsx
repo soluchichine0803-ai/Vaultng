@@ -31,8 +31,13 @@ const Register: React.FC = () => {
     if (ref) {
       setFormData(prev => ({ ...prev, referralCode: ref }));
     }
+  }, [searchParams]);
+
+  // Clear error only on initial mount and when navigating away
+  useEffect(() => {
     setError(null);
-  }, [searchParams, setError]);
+    return () => setError(null);
+  }, [setError]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -75,7 +80,7 @@ const Register: React.FC = () => {
         const isElevenDigits = phoneDigits.length === 11 && phoneDigits.startsWith('0');
 
         if (!isTenDigits && !isElevenDigits) {
-          errors.phone = 'Invalid Nigerian phone number format';
+          errors.phone = 'Invalid phone number format';
         }
       } else if (phoneDigits.length < 7 || phoneDigits.length > 15) {
         errors.phone = 'Invalid phone number length';

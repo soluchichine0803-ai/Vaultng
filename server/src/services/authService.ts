@@ -77,15 +77,19 @@ export const authService = {
 
       return { user, token };
     } catch (error: any) {
+      console.error('Registration error:', error);
       if (error.code === 'P2002') {
         const target = error.meta?.target as string[];
-        if (target?.includes('email')) {
+        // Some Prisma versions/configurations might return target as a string instead of array
+        const targetStr = Array.isArray(target) ? target.join(',') : String(target || '');
+
+        if (targetStr.includes('email')) {
           throw new Error('An account with this email already exists.');
         }
-        if (target?.includes('phone')) {
+        if (targetStr.includes('phone')) {
           throw new Error('This phone number is already registered.');
         }
-        if (target?.includes('username')) {
+        if (targetStr.includes('username')) {
           throw new Error('A user with this name already exists.');
         }
       }
