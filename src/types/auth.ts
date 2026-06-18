@@ -6,7 +6,9 @@ export interface User {
   phone: string;
   username: string;
   role: UserRole;
-  balance: number;
+  availableBalance: number;
+  lockedBalance: number;
+  totalBalance: number;
   referralCode: string;
   referredBy?: string | null;
   avatar?: string;

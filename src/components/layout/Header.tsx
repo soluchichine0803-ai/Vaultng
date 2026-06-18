@@ -22,7 +22,7 @@ const Header: React.FC = () => {
           <div className="hidden sm:flex items-center gap-2.5 px-3 py-1 bg-white/[0.03] rounded-full border border-white/[0.05]">
             <span className="text-[9px] lg:text-[10px] uppercase font-black text-text-muted tracking-tighter">Vault</span>
             <AnimatedCounter
-              value={user?.balance || 0}
+              value={user?.availableBalance || 0}
               currency="₦"
               className="text-xs lg:text-sm font-bold text-purple-soft"
             />

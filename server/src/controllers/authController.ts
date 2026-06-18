@@ -4,9 +4,13 @@ import type { AuthRequest } from '../types/auth';
 
 const formatUserResponse = (user: any) => {
   const { passwordHash, ...userWithoutPassword } = user;
+  const availableBalance = Number(user.availableBalance);
+  const lockedBalance = Number(user.lockedBalance);
   return {
     ...userWithoutPassword,
-    balance: Number(user.balance),
+    availableBalance,
+    lockedBalance,
+    totalBalance: availableBalance + lockedBalance,
   };
 };
 

@@ -1,6 +1,8 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import prisma from '../utils/prisma';
+import { walletService } from './walletService';
+import { TransactionType } from '@prisma/client';
 import type { RegisterCredentials, LoginCredentials } from '../types/shared';
 import type { JWTPayload } from '../types/auth';
 
@@ -55,20 +57,35 @@ export const authService = {
     // Normalize phone number: remove spaces, dashes, parentheses
     const normalizedPhone = data.phone.replace(/[\s\-\(\)]/g, '');
 
-    // Create user
-    const user = await prisma.user.create({
-      data: {
-        email: data.email,
-        username: username,
-        passwordHash,
-        phone: normalizedPhone,
-        referralCode: generateReferralCode(),
-        referredBy,
-        balance: 1000, // ₦1,000.00 Welcome Bonus
-      }
-    });
+    // Create user and welcome bonus atomically
+    const { user, token } = await prisma.$transaction(async (tx) => {
+      const newUser = await tx.user.create({
+        data: {
+          email: data.email,
+          username: username,
+          passwordHash,
+          phone: normalizedPhone,
+          referralCode: generateReferralCode(),
+          referredBy,
+          availableBalance: 0,
+          lockedBalance: 0,
+        }
+      });
 
-    const token = generateToken({ id: user.id, email: user.email, role: user.role });
+      // Credit welcome bonus
+      await walletService.credit(
+        newUser.id,
+        1000,
+        TransactionType.WELCOME_BONUS,
+        'Welcome bonus for new registration',
+        'WELCOME_BONUS',
+        tx
+      );
+
+      const token = generateToken({ id: newUser.id, email: newUser.email, role: newUser.role });
+
+      return { user: newUser, token };
+    });
 
     return { user, token };
   },
