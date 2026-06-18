@@ -10,7 +10,7 @@ import ParticleBackground from '../components/ui/ParticleBackground';
 const Register: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { register, isLoading, error, setError } = useAuthStore();
+  const { register, isLoading, error } = useAuthStore();
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -33,11 +33,6 @@ const Register: React.FC = () => {
     }
   }, [searchParams]);
 
-  // Clear error only on initial mount and when navigating away
-  useEffect(() => {
-    setError(null);
-    return () => setError(null);
-  }, [setError]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
