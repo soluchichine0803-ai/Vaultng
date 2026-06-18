@@ -52,16 +52,19 @@ export const authService = {
       }
     }
 
+    // Normalize phone number: remove spaces, dashes, parentheses
+    const normalizedPhone = data.phone.replace(/[\s\-\(\)]/g, '');
+
     // Create user
     const user = await prisma.user.create({
       data: {
         email: data.email,
         username: username,
         passwordHash,
-        phone: data.phone,
+        phone: normalizedPhone,
         referralCode: generateReferralCode(),
         referredBy,
-        balance: 0,
+        balance: 1000, // ₦1,000.00 Welcome Bonus
       }
     });
 

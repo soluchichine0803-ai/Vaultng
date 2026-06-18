@@ -1,14 +1,26 @@
 /**
  * Formats a number as a currency string (NGN).
- * Example: 5000 -> ₦5,000
+ * Example: 5000 -> ₦5,000.00
  */
 export const formatCurrency = (amount: number): string => {
   return new Intl.NumberFormat('en-NG', {
     style: 'currency',
     currency: 'NGN',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(amount).replace('NGN', '₦').trim();
+};
+
+/**
+ * Formats a number as a percentage string.
+ * Example: 15 -> 15%, 15.5 -> 15.5%
+ */
+export const formatPercentage = (value: number): string => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'percent',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(value / 100);
 };
 
 /**
