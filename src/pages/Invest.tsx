@@ -6,7 +6,7 @@ import Button from '../components/ui/Button';
 import { AlertCircle, Zap } from 'lucide-react';
 import { planService } from '../services/planService';
 import type { InvestmentPlan } from '../types/plan';
-import { formatCurrency, formatDuration } from '../utils/formatters';
+import { formatCurrency, formatDuration, formatPercentage } from '../utils/formatters';
 import InvestmentModal from '../components/InvestmentModal';
 
 const InvestSkeleton: React.FC = () => (
@@ -106,7 +106,7 @@ const Invest: React.FC = () => {
                   <div className="flex items-center gap-2.5">
                     <h3 className="text-sm lg:text-base font-bold tracking-tight">{plan.name} Protocol</h3>
                     <span className="px-2 py-0.5 bg-success/10 text-success text-[9px] font-black rounded uppercase tracking-widest border border-success/10">
-                      {plan.roiPercent.toFixed(1)}% ROI
+                      {formatPercentage(plan.roiPercent)} ROI
                     </span>
                     {!plan.active && (
                       <span className="px-2 py-0.5 bg-white/5 text-text-muted text-[9px] font-black rounded uppercase tracking-widest border border-white/10">

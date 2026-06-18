@@ -13,8 +13,9 @@ import { planService } from '../services/planService';
 import { investmentService } from '../services/investmentService';
 import type { InvestmentPlan } from '../types/plan';
 import type { Investment } from '../types/investment';
-import { formatCurrency, formatDuration } from '../utils/formatters';
+import { formatCurrency, formatDuration, formatPercentage } from '../utils/formatters';
 import InvestmentModal from '../components/InvestmentModal';
+import InvestmentDetailModal from '../components/InvestmentDetailModal';
 
 const PlanSkeleton: React.FC = () => (
   <div className="grid grid-cols-1 gap-3 lg:gap-4">
@@ -50,6 +51,9 @@ const Dashboard: React.FC = () => {
 
   const [selectedPlan, setSelectedPlan] = useState<InvestmentPlan | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const [selectedInvestment, setSelectedInvestment] = useState<Investment | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   const referralUrl = `https://vaultng.com/ref/${user?.referralCode || ''}`;
 
@@ -92,6 +96,11 @@ const Dashboard: React.FC = () => {
   const handleInvestClick = (plan: InvestmentPlan) => {
     setSelectedPlan(plan);
     setIsModalOpen(true);
+  };
+
+  const handleInvestmentClick = (investment: Investment) => {
+    setSelectedInvestment(investment);
+    setIsDetailModalOpen(true);
   };
 
   return (
@@ -163,6 +172,76 @@ const Dashboard: React.FC = () => {
                 </div>
              </Card>
           </div>
+
+          <section className="space-y-3 lg:space-y-4 pt-1 lg:pt-2">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm lg:text-base font-bold flex items-center gap-2 tracking-tight">
+                <Zap size={16} className="text-purple-primary fill-purple-primary/20" />
+                Priority Investment Channels
+              </h2>
+              <Button onClick={() => navigate('/invest')} variant="ghost" size="sm" className="text-[9px] font-black uppercase tracking-widest text-purple-soft">View Market</Button>
+            </div>
+
+            {isLoading ? (
+              <PlanSkeleton />
+            ) : error ? (
+              <Card className="p-10 flex flex-col items-center justify-center text-center space-y-4 border-dashed border-white/10">
+                <div className="w-12 h-12 rounded-full bg-danger/10 flex items-center justify-center">
+                  <AlertCircle size={24} className="text-danger" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-bold text-text-primary">{error}</p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-[10px] font-black uppercase tracking-widest text-purple-soft"
+                    onClick={() => window.location.reload()}
+                  >
+                    Retry Connection
+                  </Button>
+                </div>
+              </Card>
+            ) : plans.length === 0 ? (
+              <Card className="p-10 flex flex-col items-center justify-center text-center space-y-3 border-dashed border-white/10">
+                <Zap size={32} className="text-text-muted opacity-20" />
+                <p className="text-sm font-medium text-text-muted">No investment plans are currently available.</p>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 gap-2.5 lg:gap-3">
+                {plans.slice(0, 3).map((plan) => (
+                  <Card key={plan.id} hoverable className="p-5 flex items-center justify-between">
+                    <div className="space-y-1.5 lg:space-y-2">
+                      <div className="flex items-center gap-2.5">
+                        <h4 className="text-xs lg:text-sm font-bold tracking-tight">{plan.name}</h4>
+                        <span className="text-[9px] font-medium text-text-muted opacity-50">
+                          {formatCurrency(plan.minAmount)} - {formatCurrency(plan.maxAmount)}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-4 lg:gap-8">
+                        <div className="space-y-0.5">
+                          <p className="text-[8px] font-black uppercase tracking-tighter text-text-muted">ROI Yield</p>
+                          <p className="text-[11px] font-bold text-success">{formatPercentage(plan.roiPercent)}</p>
+                        </div>
+                        <div className="w-px h-5 bg-white/5" />
+                        <div className="space-y-0.5">
+                          <p className="text-[8px] font-black uppercase tracking-tighter text-text-muted">Duration</p>
+                          <p className="text-[11px] font-bold text-text-primary">{formatDuration(plan.durationHours)}</p>
+                        </div>
+                      </div>
+                    </div>
+                    <Button
+                      onClick={() => handleInvestClick(plan)}
+                      size="sm"
+                      variant="secondary"
+                      className="px-5 font-bold h-10 lg:h-11 border-white/[0.05] text-[10px] uppercase tracking-widest"
+                    >
+                      Details
+                    </Button>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </section>
         </div>
 
         {/* Desktop Supporting Rail: Secondary Metrics */}
@@ -185,18 +264,21 @@ const Dashboard: React.FC = () => {
                 </div>
               ) : (
                 investments.slice(0, 3).map((inv) => {
-                  const snapshottedROI = ((inv.expectedProfit / inv.amount) * 100).toFixed(1);
                   return (
-                    <div key={inv.id} className="flex items-center justify-between p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.04]">
+                    <button
+                      key={inv.id}
+                      onClick={() => handleInvestmentClick(inv)}
+                      className="flex w-full items-center justify-between p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.05] transition-colors text-left"
+                    >
                       <div className="space-y-0.5">
                         <p className="text-[10px] font-bold text-text-primary truncate max-w-[100px]">{inv.plan?.name}</p>
                         <p className="text-[8px] font-black text-text-muted uppercase tracking-tighter">{formatCurrency(inv.amount)}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-[10px] font-bold text-success">+{snapshottedROI}%</p>
+                        <p className="text-[10px] font-bold text-success">+{formatPercentage(inv.roiPercentSnapshot)}</p>
                         <p className="text-[8px] font-black text-text-muted uppercase tracking-tighter">Yield</p>
                       </div>
-                    </div>
+                    </button>
                   );
                 })
               )}
@@ -255,81 +337,17 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      <section className="space-y-3 lg:space-y-4 lg:w-2/3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm lg:text-base font-bold flex items-center gap-2 tracking-tight">
-            <Zap size={16} className="text-purple-primary fill-purple-primary/20" />
-            Priority Investment Channels
-          </h2>
-          <Button variant="ghost" size="sm" className="text-[9px] font-black uppercase tracking-widest text-purple-soft">View Market</Button>
-        </div>
-
-        {isLoading ? (
-          <PlanSkeleton />
-        ) : error ? (
-          <Card className="p-10 flex flex-col items-center justify-center text-center space-y-4 border-dashed border-white/10">
-            <div className="w-12 h-12 rounded-full bg-danger/10 flex items-center justify-center">
-              <AlertCircle size={24} className="text-danger" />
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm font-bold text-text-primary">{error}</p>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-[10px] font-black uppercase tracking-widest text-purple-soft"
-                onClick={() => window.location.reload()}
-              >
-                Retry Connection
-              </Button>
-            </div>
-          </Card>
-        ) : plans.length === 0 ? (
-          <Card className="p-10 flex flex-col items-center justify-center text-center space-y-3 border-dashed border-white/10">
-            <Zap size={32} className="text-text-muted opacity-20" />
-            <p className="text-sm font-medium text-text-muted">No investment plans are currently available.</p>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 gap-2.5 lg:gap-3">
-            {plans.slice(0, 3).map((plan) => (
-              <Card key={plan.id} hoverable className="p-5 flex items-center justify-between">
-                <div className="space-y-1.5 lg:space-y-2">
-                  <div className="flex items-center gap-2.5">
-                    <h4 className="text-xs lg:text-sm font-bold tracking-tight">{plan.name}</h4>
-                    <span className="text-[9px] font-medium text-text-muted opacity-50">
-                      {formatCurrency(plan.minAmount)} - {formatCurrency(plan.maxAmount)}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-4 lg:gap-8">
-                    <div className="space-y-0.5">
-                      <p className="text-[8px] font-black uppercase tracking-tighter text-text-muted">ROI Yield</p>
-                      <p className="text-[11px] font-bold text-success">{plan.roiPercent.toFixed(2)}%</p>
-                    </div>
-                    <div className="w-px h-5 bg-white/5" />
-                    <div className="space-y-0.5">
-                      <p className="text-[8px] font-black uppercase tracking-tighter text-text-muted">Duration</p>
-                      <p className="text-[11px] font-bold text-text-primary">{formatDuration(plan.durationHours)}</p>
-                    </div>
-                  </div>
-                </div>
-                <Button
-                  onClick={() => handleInvestClick(plan)}
-                  size="sm"
-                  variant="secondary"
-                  className="px-5 font-bold h-10 lg:h-11 border-white/[0.05] text-[10px] uppercase tracking-widest"
-                >
-                  Details
-                </Button>
-              </Card>
-            ))}
-          </div>
-        )}
-      </section>
-
       <InvestmentModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         plan={selectedPlan}
         onSuccess={fetchInvestments}
+      />
+
+      <InvestmentDetailModal
+        isOpen={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+        investment={selectedInvestment}
       />
     </motion.div>
   );

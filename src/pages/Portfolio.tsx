@@ -5,18 +5,18 @@ import { pageTransition } from '../lib/animations';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
-import Modal from '../components/ui/Modal';
-import { Briefcase, Calendar, Clock, AlertCircle, Info, Zap } from 'lucide-react';
+import { Briefcase, AlertCircle } from 'lucide-react';
 import { investmentService } from '../services/investmentService';
 import type { Investment } from '../types/investment';
-import { formatCurrency, formatDuration } from '../utils/formatters';
+import { formatCurrency, formatDuration, formatPercentage } from '../utils/formatters';
+import InvestmentDetailModal from '../components/InvestmentDetailModal';
 
 const PortfolioSkeleton: React.FC = () => (
   <div className="space-y-4">
     {[1, 2, 3].map((i) => (
       <Card key={i} className="p-5 lg:p-6 border-white/[0.02]">
         <div className="flex justify-between items-center">
-          <div className="space-y-3 w-full max-w-md">
+          <div className="space-y-3 w-full max-m-md">
             <div className="h-5 bg-white/5 rounded-full w-1/3 animate-pulse" />
             <div className="flex gap-6">
               <div className="h-4 bg-white/5 rounded-full w-24 animate-pulse" />
@@ -29,89 +29,6 @@ const PortfolioSkeleton: React.FC = () => (
     ))}
   </div>
 );
-
-const InvestmentDetailModal: React.FC<{
-  isOpen: boolean;
-  onClose: () => void;
-  investment: Investment | null;
-}> = ({ isOpen, onClose, investment }) => {
-  if (!investment) return null;
-
-  const statusMap = {
-    ACTIVE: { label: 'Active', variant: 'purple' as const },
-    COMPLETED: { label: 'Matured', variant: 'success' as const },
-    CANCELLED: { label: 'Cancelled', variant: 'danger' as const },
-  };
-
-  const status = statusMap[investment.status] || { label: investment.status, variant: 'default' as const };
-
-  return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Investment Details">
-      <div className="space-y-6">
-        <div className="flex items-center gap-3 p-4 rounded-xl bg-purple-primary/5 border border-purple-primary/10">
-          <div className="w-10 h-10 rounded-full bg-purple-primary/10 flex items-center justify-center flex-shrink-0">
-            <Zap size={20} className="text-purple-primary" />
-          </div>
-          <div>
-            <h4 className="text-sm font-bold text-text-primary">{investment.plan?.name} Protocol</h4>
-            <Badge variant={status.variant} size="sm" className="mt-1">{status.label}</Badge>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="p-4 rounded-xl border border-white/[0.04] bg-white/[0.01] space-y-1">
-            <p className="text-[9px] font-black text-text-muted uppercase tracking-widest">Amount Invested</p>
-            <p className="text-base font-bold text-text-primary font-mono">{formatCurrency(investment.amount)}</p>
-          </div>
-          <div className="p-4 rounded-xl border border-white/[0.04] bg-white/[0.01] space-y-1">
-            <p className="text-[9px] font-black text-text-muted uppercase tracking-widest">Expected Profit</p>
-            <p className="text-base font-bold text-success font-mono">{formatCurrency(investment.expectedProfit)}</p>
-          </div>
-          <div className="p-4 rounded-xl border border-white/[0.04] bg-white/[0.01] space-y-1">
-            <p className="text-[9px] font-black text-text-muted uppercase tracking-widest">ROI Snapshot</p>
-            <p className="text-base font-bold text-text-primary">{investment.roiPercentSnapshot.toFixed(2)}%</p>
-          </div>
-          <div className="p-4 rounded-xl border border-white/[0.04] bg-white/[0.01] space-y-1">
-            <p className="text-[9px] font-black text-text-muted uppercase tracking-widest">Duration</p>
-            <p className="text-base font-bold text-text-primary">{formatDuration(investment.durationHoursSnapshot)}</p>
-          </div>
-        </div>
-
-        <div className="space-y-3 p-4 rounded-xl border border-white/[0.04] bg-white/[0.01]">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2 text-text-muted">
-              <Calendar size={14} />
-              <span className="text-[10px] font-bold uppercase">Start Date</span>
-            </div>
-            <span className="text-xs font-medium text-text-primary">
-              {new Date(investment.createdAt).toLocaleDateString()} {new Date(investment.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </span>
-          </div>
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2 text-text-muted">
-              <Clock size={14} />
-              <span className="text-[10px] font-bold uppercase">Maturity Date</span>
-            </div>
-            <span className="text-xs font-medium text-text-primary">
-              {new Date(investment.maturityDate).toLocaleDateString()} {new Date(investment.maturityDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </span>
-          </div>
-        </div>
-
-        <div className="flex items-start gap-2.5 px-1 opacity-70">
-          <Info size={14} className="text-purple-soft mt-0.5" />
-          <p className="text-[10px] leading-relaxed text-text-muted font-medium italic">
-            This is a read-only historical record of your commitment to the {investment.plan?.name} Protocol.
-          </p>
-        </div>
-
-        <Button onClick={onClose} className="w-full h-12 font-black uppercase tracking-widest text-[11px]">
-          Close Record
-        </Button>
-      </div>
-    </Modal>
-  );
-};
 
 const Portfolio: React.FC = () => {
   const navigate = useNavigate();
@@ -220,7 +137,7 @@ const Portfolio: React.FC = () => {
                       </div>
                       <div className="hidden sm:block">
                         <p className="text-[9px] uppercase font-black text-text-muted tracking-widest">Yield Term</p>
-                        <p className="text-xs lg:text-sm font-bold text-text-primary">{inv.roiPercentSnapshot.toFixed(1)}% / {formatDuration(inv.durationHoursSnapshot)}</p>
+                        <p className="text-xs lg:text-sm font-bold text-text-primary">{formatPercentage(inv.roiPercentSnapshot)} / {formatDuration(inv.durationHoursSnapshot)}</p>
                       </div>
                       <div className="hidden sm:block text-right md:text-left">
                         <p className="text-[9px] uppercase font-black text-text-muted tracking-widest">Maturity Date</p>
