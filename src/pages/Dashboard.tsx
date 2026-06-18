@@ -134,7 +134,7 @@ const Dashboard: React.FC = () => {
               <span className="text-[9px] lg:text-[10px] font-bold text-text-muted uppercase tracking-wider">Available Liquidity</span>
               <div className="flex flex-col lg:flex-row lg:items-end gap-1 lg:gap-3">
                 <AnimatedCounter
-                  value={Number(user?.balance) || 0}
+                  value={Number(user?.availableBalance) || 0}
                   currency="₦"
                   className="text-4xl lg:text-5xl font-bold tracking-tight text-white"
                 />
@@ -142,6 +142,18 @@ const Dashboard: React.FC = () => {
                   <ArrowUpRight size={14} strokeWidth={3} />
                   <span>+₦0.00 Yield Today</span>
                 </div>
+              </div>
+            </div>
+
+            <div className="flex gap-4 pt-1">
+              <div className="space-y-0.5">
+                <span className="text-[8px] font-black text-text-muted uppercase tracking-wider">Locked Portfolio</span>
+                <p className="text-sm font-bold text-text-secondary">₦{(user?.lockedBalance || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+              </div>
+              <div className="w-px h-8 bg-white/5" />
+              <div className="space-y-0.5">
+                <span className="text-[8px] font-black text-text-muted uppercase tracking-wider">Total Net Assets</span>
+                <p className="text-sm font-bold text-purple-soft">₦{(user?.totalBalance || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
               </div>
             </div>
 

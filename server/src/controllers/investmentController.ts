@@ -1,7 +1,8 @@
 import type { Response } from 'express';
 import type { AuthRequest } from '../types/auth';
 import prisma from '../utils/prisma';
-import { InvestmentStatus } from '@prisma/client';
+import { InvestmentStatus, TransactionType } from '@prisma/client';
+import { walletService } from '../services/walletService';
 
 export const createInvestment = async (req: AuthRequest, res: Response) => {
   try {
@@ -62,25 +63,47 @@ export const createInvestment = async (req: AuthRequest, res: Response) => {
     const maturityDate = new Date();
     maturityDate.setHours(maturityDate.getHours() + plan.durationHours);
 
-    // Create investment record
-    const investment = await prisma.investment.create({
-      data: {
-        userId,
-        planId,
-        amount: investmentAmount,
-        expectedProfit,
-        roiPercentSnapshot: Number(plan.roiPercent),
-        durationHoursSnapshot: plan.durationHours,
-        maturityDate,
-        status: InvestmentStatus.ACTIVE,
-      },
-      include: {
-        plan: {
-          select: {
-            name: true,
+    // Create investment and update wallet atomically
+    const investment = await prisma.$transaction(async (tx) => {
+      // 1. Create investment record first to get ID
+      const newInvestment = await tx.investment.create({
+        data: {
+          userId,
+          planId,
+          amount: investmentAmount,
+          expectedProfit,
+          roiPercentSnapshot: Number(plan.roiPercent),
+          durationHoursSnapshot: plan.durationHours,
+          maturityDate,
+          status: InvestmentStatus.ACTIVE,
+        },
+        include: {
+          plan: {
+            select: {
+              name: true,
+            },
           },
         },
-      },
+      });
+
+      // 2. Lock funds using the investment ID as reference
+      try {
+        await walletService.lockFunds(
+          userId,
+          investmentAmount,
+          TransactionType.INVESTMENT_CREATED,
+          `Investment in ${plan.name} plan`,
+          newInvestment.id,
+          tx
+        );
+      } catch (error: any) {
+        if (error.message === 'Insufficient available balance') {
+          throw new Error('INSUFFICIENT_BALANCE');
+        }
+        throw error;
+      }
+
+      return newInvestment;
     });
 
     res.status(201).json({
@@ -91,7 +114,14 @@ export const createInvestment = async (req: AuthRequest, res: Response) => {
         expectedProfit: Number(investment.expectedProfit),
       },
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error.message === 'INSUFFICIENT_BALANCE') {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Insufficient available balance for this investment',
+      });
+    }
+
     console.error('Error creating investment:', error);
     res.status(500).json({
       status: 'error',

@@ -20,7 +20,7 @@ const Withdraw: React.FC = () => {
         <Card className="p-6 lg:p-8 space-y-6 border-white/[0.02]">
           <div className="p-4 lg:p-5 bg-white/[0.03] border border-white/[0.05] rounded-xl">
             <p className="text-[9px] uppercase font-black text-text-muted tracking-widest mb-1">Available Liquidity</p>
-            <p className="text-2xl lg:text-3xl font-bold text-white font-mono">₦{(user?.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+            <p className="text-2xl lg:text-3xl font-bold text-white font-mono">₦{(user?.availableBalance || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
           </div>
 
           <Input
