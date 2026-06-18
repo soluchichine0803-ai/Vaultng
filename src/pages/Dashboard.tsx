@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Card from '../components/ui/Card';
 import AnimatedCounter from '../components/ui/AnimatedCounter';
 import Button from '../components/ui/Button';
@@ -39,6 +40,7 @@ const PlanSkeleton: React.FC = () => (
 );
 
 const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
   const { user } = useAuthStore();
   const [plans, setPlans] = useState<InvestmentPlan[]>([]);
   const [investments, setInvestments] = useState<Investment[]>([]);
@@ -201,7 +203,7 @@ const Dashboard: React.FC = () => {
             </div>
 
             {investments.length > 0 && (
-              <Button href="/portfolio" variant="ghost" size="sm" className="w-full text-[8px] font-black uppercase tracking-widest h-8 border border-white/[0.04] hover:bg-white/[0.02]">
+              <Button onClick={() => navigate('/portfolio')} variant="ghost" size="sm" className="w-full text-[8px] font-black uppercase tracking-widest h-8 border border-white/[0.04] hover:bg-white/[0.02]">
                 View Full Portfolio
               </Button>
             )}

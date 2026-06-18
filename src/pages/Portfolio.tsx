@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { pageTransition } from '../lib/animations';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
 import Modal from '../components/ui/Modal';
-import { Briefcase, Calendar, TrendingUp, Clock, AlertCircle, Info, Zap } from 'lucide-react';
+import { Briefcase, Calendar, Clock, AlertCircle, Info, Zap } from 'lucide-react';
 import { investmentService } from '../services/investmentService';
 import type { Investment } from '../types/investment';
 import { formatCurrency, formatDuration } from '../utils/formatters';
@@ -113,6 +114,7 @@ const InvestmentDetailModal: React.FC<{
 };
 
 const Portfolio: React.FC = () => {
+  const navigate = useNavigate();
   const [investments, setInvestments] = useState<Investment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -182,7 +184,7 @@ const Portfolio: React.FC = () => {
             </p>
           </div>
           <Button
-            href="/invest"
+            onClick={() => navigate('/invest')}
             className="px-8 font-black uppercase text-[10px] tracking-widest"
           >
             Explore Channels
