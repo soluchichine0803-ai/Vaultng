@@ -5,6 +5,7 @@ import authRoutes from './routes/authRoutes';
 import planRoutes from './routes/planRoutes';
 import investmentRoutes from './routes/investmentRoutes';
 import depositRoutes from './routes/depositRoutes';
+import referralRoutes from './routes/referralRoutes';
 
 dotenv.config();
 
@@ -19,6 +20,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/plans', planRoutes);
 app.use('/api/investments', investmentRoutes);
 app.use('/api/deposits', depositRoutes);
+app.use('/api/referrals', referralRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req: Request, res: Response) => {

@@ -70,6 +70,18 @@ export const authService = {
           tx
         );
 
+        // Create referral record if referred
+        if (referredBy) {
+          await tx.referral.create({
+            data: {
+              referrerId: referredBy,
+              referredUserId: newUser.id,
+              commission: 0,
+              status: 'PENDING',
+            }
+          });
+        }
+
         const token = generateToken({ id: newUser.id, email: newUser.email, role: newUser.role });
 
         return { user: newUser, token };
