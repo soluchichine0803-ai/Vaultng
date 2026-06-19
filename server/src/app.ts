@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes';
 import planRoutes from './routes/planRoutes';
 import investmentRoutes from './routes/investmentRoutes';
+import depositRoutes from './routes/depositRoutes';
 
 dotenv.config();
 
@@ -17,6 +18,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/plans', planRoutes);
 app.use('/api/investments', investmentRoutes);
+app.use('/api/deposits', depositRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req: Request, res: Response) => {
