@@ -158,8 +158,8 @@ const Dashboard: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-2 gap-3 pt-2 lg:pt-3">
-              <Button size="lg" className="flex-1 font-black uppercase tracking-widest text-xs h-14">Deposit</Button>
-              <Button size="lg" variant="secondary" className="flex-1 font-black uppercase tracking-widest text-xs h-14 bg-white/[0.02]">Withdraw</Button>
+              <Button onClick={() => navigate('/deposit')} size="lg" className="flex-1 font-black uppercase tracking-widest text-xs h-12 lg:h-14">Deposit</Button>
+              <Button onClick={() => navigate('/withdraw')} size="lg" variant="secondary" className="flex-1 font-black uppercase tracking-widest text-xs h-12 lg:h-14 bg-white/[0.02]">Withdraw</Button>
             </div>
           </Card>
 

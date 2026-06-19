@@ -63,7 +63,7 @@ const Portfolio: React.FC = () => {
 
   return (
     <motion.div variants={pageTransition} initial="initial" animate="animate" exit="exit" className="space-y-6">
-      <header className="flex flex-col gap-0.5 lg:gap-1">
+      <header className="flex flex-col gap-0.5 lg:gap-1 mb-2">
         <h1 className="text-lg lg:text-xl font-bold tracking-tight">Active Portfolio</h1>
         <p className="text-text-muted text-[10px] lg:text-xs font-black opacity-60 uppercase tracking-tighter">
           Operational: Comprehensive Commitment Registry
@@ -119,30 +119,34 @@ const Portfolio: React.FC = () => {
 
             return (
               <Card key={inv.id} className="p-5 lg:p-6 border-white/[0.02] hover:border-white/[0.06] transition-colors group">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div className="flex-1 space-y-3">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                  <div className="flex-1 space-y-4">
                     <div className="flex items-center gap-3">
                       <h3 className="text-sm lg:text-base font-bold tracking-tight">{inv.plan?.name} Protocol</h3>
                       <Badge variant={status.variant} size="sm">{status.label}</Badge>
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 lg:gap-8">
-                      <div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-5 lg:gap-8">
+                      <div className="space-y-1">
                         <p className="text-[9px] uppercase font-black text-text-muted tracking-widest">Commitment</p>
                         <p className="font-mono text-xs lg:text-sm font-bold text-text-primary">{formatCurrency(inv.amount)}</p>
                       </div>
-                      <div>
+                      <div className="space-y-1">
                         <p className="text-[9px] uppercase font-black text-text-muted tracking-widest">Expected Profit</p>
                         <p className="font-mono text-xs lg:text-sm font-bold text-success">+{formatCurrency(inv.expectedProfit)}</p>
                       </div>
-                      <div className="hidden sm:block">
+                      <div className="hidden sm:block space-y-1">
                         <p className="text-[9px] uppercase font-black text-text-muted tracking-widest">Yield Term</p>
                         <p className="text-xs lg:text-sm font-bold text-text-primary">{formatPercentage(inv.roiPercentSnapshot)} / {formatDuration(inv.durationHoursSnapshot)}</p>
                       </div>
-                      <div className="hidden sm:block text-right md:text-left">
+                      <div className="hidden sm:block space-y-1 text-right md:text-left">
                         <p className="text-[9px] uppercase font-black text-text-muted tracking-widest">Maturity Date</p>
                         <p className="text-xs lg:text-sm font-bold text-text-primary">
-                          {new Date(inv.maturityDate).toLocaleDateString()}
+                          {new Date(inv.maturityDate).toLocaleDateString(undefined, {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric'
+                          })}
                         </p>
                       </div>
                     </div>

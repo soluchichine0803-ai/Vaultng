@@ -47,6 +47,18 @@
   .animate-float {
     animation: float 3s ease-in-out infinite;
   }
+
+  /* Remove number input arrows */
+  .no-spinner::-webkit-inner-spin-button,
+  .no-spinner::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  .no-spinner {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
 }
 
 @keyframes pulse-glow {

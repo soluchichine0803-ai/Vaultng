@@ -115,8 +115,13 @@ const Register: React.FC = () => {
 
       await register(submissionData);
       navigate('/login');
-    } catch (err) {
-      // Error handled by store
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || err.message || '';
+      if (errorMessage.toLowerCase().includes('email')) {
+        setValidationErrors(prev => ({ ...prev, email: errorMessage }));
+      } else if (errorMessage.toLowerCase().includes('phone')) {
+        setValidationErrors(prev => ({ ...prev, phone: errorMessage }));
+      }
     }
   };
 
@@ -149,6 +154,7 @@ const Register: React.FC = () => {
               value={formData.firstName}
               onChange={handleInputChange}
               error={validationErrors.firstName}
+              required
             />
             <Input
               label="Last Name"
@@ -157,6 +163,7 @@ const Register: React.FC = () => {
               value={formData.lastName}
               onChange={handleInputChange}
               error={validationErrors.lastName}
+              required
             />
           </div>
           <Input
@@ -249,7 +256,7 @@ const Register: React.FC = () => {
           <Button
             type="submit"
             loading={isLoading}
-            className="w-full h-14 font-black uppercase text-xs tracking-[0.2em]"
+            className="w-full h-12 lg:h-14 font-black uppercase text-xs tracking-[0.2em]"
           >
             Create Account
           </Button>
