@@ -36,6 +36,7 @@ const InvestSkeleton: React.FC = () => (
 );
 
 const Invest: React.FC = () => {
+  const { fetchUser } = useAuthStore();
   const [plans, setPlans] = useState<InvestmentPlan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -148,8 +149,7 @@ const Invest: React.FC = () => {
         onClose={() => setIsModalOpen(false)}
         plan={selectedPlan}
         onSuccess={() => {
-          // In a real app, we might refresh balances or investments here.
-          // For now, just being consistent.
+          fetchUser();
         }}
       />
     </motion.div>
