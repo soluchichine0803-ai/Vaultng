@@ -8,6 +8,7 @@ import { planService } from '../services/planService';
 import type { InvestmentPlan } from '../types/plan';
 import { formatCurrency, formatDuration, formatPercentage } from '../utils/formatters';
 import InvestmentModal from '../components/InvestmentModal';
+import { useAuthStore } from '../store/authStore';
 
 const InvestSkeleton: React.FC = () => (
   <div className="grid grid-cols-1 gap-3 lg:gap-4">
