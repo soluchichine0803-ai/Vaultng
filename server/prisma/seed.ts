@@ -19,7 +19,8 @@ async function main() {
       passwordHash: hashedPassword,
       role: UserRole.ADMIN,
       referralCode: 'ADMINREF',
-      balance: 0,
+      availableBalance: 0,
+      lockedBalance: 0,
     },
   });
   console.log('Admin user created/verified');
