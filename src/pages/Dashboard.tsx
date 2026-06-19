@@ -42,7 +42,7 @@ const PlanSkeleton: React.FC = () => (
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const { user, fetchUser } = useAuthStore();
   const [plans, setPlans] = useState<InvestmentPlan[]>([]);
   const [investments, setInvestments] = useState<Investment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -103,6 +103,11 @@ const Dashboard: React.FC = () => {
     setIsDetailModalOpen(true);
   };
 
+  const handleInvestmentSuccess = () => {
+    fetchInvestments();
+    fetchUser();
+  };
+
   return (
     <motion.div
       variants={pageTransition}
@@ -153,13 +158,13 @@ const Dashboard: React.FC = () => {
               <div className="w-px h-8 bg-white/5" />
               <div className="space-y-0.5">
                 <span className="text-[8px] font-black text-text-muted uppercase tracking-wider">Total Net Assets</span>
-                <p className="text-sm font-bold text-purple-soft">₦{(user?.totalBalance || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                <p className="text-sm font-bold text-purple-soft">₦{(Number(user?.availableBalance || 0) + Number(user?.lockedBalance || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3 pt-2 lg:pt-3">
-              <Button size="lg" className="flex-1 font-black uppercase tracking-widest text-xs h-14">Deposit</Button>
-              <Button size="lg" variant="secondary" className="flex-1 font-black uppercase tracking-widest text-xs h-14 bg-white/[0.02]">Withdraw</Button>
+              <Button onClick={() => navigate('/deposit')} size="lg" className="flex-1 font-black uppercase tracking-widest text-xs h-12 lg:h-14">Deposit</Button>
+              <Button onClick={() => navigate('/withdraw')} size="lg" variant="secondary" className="flex-1 font-black uppercase tracking-widest text-xs h-12 lg:h-14 bg-white/[0.02]">Withdraw</Button>
             </div>
           </Card>
 
@@ -353,7 +358,7 @@ const Dashboard: React.FC = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         plan={selectedPlan}
-        onSuccess={fetchInvestments}
+        onSuccess={handleInvestmentSuccess}
       />
 
       <InvestmentDetailModal

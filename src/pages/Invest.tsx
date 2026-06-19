@@ -37,6 +37,7 @@ const InvestSkeleton: React.FC = () => (
 );
 
 const Invest: React.FC = () => {
+  const { fetchUser } = useAuthStore();
   const [plans, setPlans] = useState<InvestmentPlan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -69,7 +70,7 @@ const Invest: React.FC = () => {
 
   return (
     <motion.div variants={pageTransition} initial="initial" animate="animate" exit="exit" className="space-y-6">
-      <header className="flex flex-col gap-0.5 lg:gap-1">
+      <header className="flex flex-col gap-0.5 lg:gap-1 mb-2">
         <h1 className="text-lg lg:text-xl font-bold tracking-tight">Investment Channels</h1>
         <p className="text-text-muted text-[10px] lg:text-xs font-black opacity-60 uppercase tracking-tighter">Operational: Active Market Channels</p>
       </header>
@@ -103,7 +104,7 @@ const Invest: React.FC = () => {
           {plans.map((plan) => (
             <Card key={plan.id} className={`p-5 lg:p-6 border-white/[0.02] ${!plan.active ? 'opacity-50' : ''}`}>
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <div className="flex items-center gap-2.5">
                     <h3 className="text-sm lg:text-base font-bold tracking-tight">{plan.name} Protocol</h3>
                     <span className="px-2 py-0.5 bg-success/10 text-success text-[9px] font-black rounded uppercase tracking-widest border border-success/10">
@@ -119,13 +120,13 @@ const Invest: React.FC = () => {
                     Precision yield optimization through structured {plan.name.toLowerCase()} protocols and liquidity aggregation over a {formatDuration(plan.durationHours).toLowerCase()} cycle.
                   </p>
                   <div className="flex gap-6 lg:gap-8 pt-1">
-                    <div>
+                    <div className="space-y-1">
                       <p className="text-[9px] uppercase font-black text-text-muted tracking-widest">Commitment Range</p>
                       <p className="font-mono text-xs lg:text-sm font-bold text-text-primary">
                         {formatCurrency(plan.minAmount)} - {formatCurrency(plan.maxAmount)}
                       </p>
                     </div>
-                    <div>
+                    <div className="space-y-1">
                       <p className="text-[9px] uppercase font-black text-text-muted tracking-widest">Duration</p>
                       <p className="font-mono text-xs lg:text-sm font-bold text-text-primary">{formatDuration(plan.durationHours)}</p>
                     </div>
@@ -149,8 +150,7 @@ const Invest: React.FC = () => {
         onClose={() => setIsModalOpen(false)}
         plan={selectedPlan}
         onSuccess={() => {
-          // In a real app, we might refresh balances or investments here.
-          // For now, just being consistent.
+          fetchUser();
         }}
       />
     </motion.div>

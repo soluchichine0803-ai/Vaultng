@@ -23,6 +23,8 @@ const Deposit: React.FC = () => {
   const [deposits, setDeposits] = useState<DepositRequest[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
 
+  const quickAmounts = [3000, 5000, 10000, 50000];
+
   const fetchHistory = async () => {
     try {
       const data = await depositService.getDepositHistory();
@@ -86,9 +88,9 @@ const Deposit: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-4">
         {/* Deposit Form */}
         <div className="md:col-span-1">
-          <Card className="h-full">
+          <Card className="h-full p-5 lg:p-6">
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
+              <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-400 mb-2">
                   Amount (NGN)
                 </label>
@@ -98,8 +100,21 @@ const Deposit: React.FC = () => {
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   disabled={isSubmitting}
-                  className="text-lg font-semibold"
+                  className="text-lg font-semibold no-spinner"
                 />
+
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  {quickAmounts.map((amt) => (
+                    <button
+                      key={amt}
+                      type="button"
+                      onClick={() => setAmount(amt.toString())}
+                      className="py-2 px-3 text-[11px] font-bold rounded-lg border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.05] hover:border-purple-primary/30 transition-all text-text-secondary"
+                    >
+                      ₦{amt.toLocaleString()}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="p-4 rounded-xl bg-purple-primary/5 border border-purple-primary/10 space-y-2">
@@ -125,15 +140,15 @@ const Deposit: React.FC = () => {
 
         {/* Deposit History */}
         <div className="md:col-span-2">
-          <Card className="h-full flex flex-col">
-            <div className="flex items-center justify-between mb-6">
+          <Card className="h-full flex flex-col p-5 lg:p-6">
+            <div className="flex items-center justify-between mb-8">
               <h3 className="text-lg font-semibold text-white flex items-center gap-2">
                 <History className="w-5 h-5 text-purple-primary" />
                 Deposit History
               </h3>
             </div>
 
-            <div className="flex-1 overflow-x-auto">
+            <div className="flex-1 overflow-x-auto -mx-1 px-1">
               {isLoadingHistory ? (
                 <div className="flex flex-col items-center justify-center py-12 space-y-3">
                   <Loader2 className="w-8 h-8 text-purple-primary animate-spin" />
@@ -147,35 +162,39 @@ const Deposit: React.FC = () => {
                   <p className="text-gray-400">No deposit requests found</p>
                 </div>
               ) : (
-                <table className="w-full text-left">
+                <table className="w-full text-left border-separate border-spacing-0">
                   <thead>
-                    <tr className="text-xs uppercase tracking-wider text-gray-500 border-b border-white/5">
-                      <th className="pb-3 font-medium">Reference</th>
-                      <th className="pb-3 font-medium text-right">Amount</th>
-                      <th className="pb-3 font-medium text-center">Status</th>
-                      <th className="pb-3 font-medium text-right">Date</th>
+                    <tr className="text-[10px] uppercase tracking-widest text-text-muted/60 border-b border-white/5">
+                      <th className="pb-4 font-black border-b border-white/5">Reference</th>
+                      <th className="pb-4 font-black text-right border-b border-white/5">Amount</th>
+                      <th className="pb-4 font-black text-center border-b border-white/5">Status</th>
+                      <th className="pb-4 font-black text-right border-b border-white/5">Date</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-white/5">
+                  <tbody className="">
                     {deposits.map((deposit) => (
-                      <tr key={deposit.id} className="text-sm">
-                        <td className="py-4">
-                          <span className="font-mono text-xs text-gray-300">
+                      <tr key={deposit.id} className="text-sm group hover:bg-white/[0.01] transition-colors">
+                        <td className="py-4 border-b border-white/[0.03]">
+                          <span className="font-mono text-[11px] text-gray-400 bg-white/[0.03] px-2 py-1 rounded">
                             {deposit.reference}
                           </span>
                         </td>
-                        <td className="py-4 text-right font-medium text-white">
+                        <td className="py-4 text-right font-bold text-white border-b border-white/[0.03]">
                           {formatCurrency(Number(deposit.amount))}
                         </td>
-                        <td className="py-4">
+                        <td className="py-4 border-b border-white/[0.03]">
                           <div className="flex justify-center">
-                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${getStatusColor(deposit.status)}`}>
+                            <span className={`px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider ${getStatusColor(deposit.status)}`}>
                               {deposit.status}
                             </span>
                           </div>
                         </td>
-                        <td className="py-4 text-right text-gray-400 text-xs">
-                          {new Date(deposit.createdAt).toLocaleDateString()}
+                        <td className="py-4 text-right text-gray-400 text-[11px] font-medium border-b border-white/[0.03]">
+                          {new Date(deposit.createdAt).toLocaleDateString(undefined, {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric'
+                          })}
                         </td>
                       </tr>
                     ))}

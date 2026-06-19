@@ -60,7 +60,7 @@ const Referrals: React.FC = () => {
 
   return (
     <motion.div variants={pageTransition} initial="initial" animate="animate" exit="exit" className="space-y-6">
-      <header className="flex flex-col gap-0.5 lg:gap-1">
+      <header className="flex flex-col gap-0.5 lg:gap-1 mb-2">
         <h1 className="text-lg lg:text-xl font-bold tracking-tight">Partner Network</h1>
         <p className="text-text-muted text-[10px] lg:text-xs font-black opacity-60 uppercase tracking-tighter">Operational: Network Growth</p>
       </header>
@@ -98,13 +98,14 @@ const Referrals: React.FC = () => {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3">
-          <div className="flex-1 bg-white/[0.02] border border-white/[0.05] rounded-lg px-4 py-4 text-xs lg:text-sm font-mono text-purple-soft overflow-hidden whitespace-nowrap">
-            {window.location.hostname}/register?ref={user?.referralCode}
+          <div className="flex-1 bg-white/[0.02] border border-white/[0.05] rounded-lg px-4 py-4 text-xs lg:text-sm font-mono text-purple-soft overflow-hidden whitespace-nowrap flex items-center">
+            {window.location.origin}/register?ref={user?.referralCode}
           </div>
+
           <Button
             onClick={copyLink}
             size="lg"
-            className="h-14 sm:h-auto px-10 font-black uppercase text-[10px] tracking-widest"
+            className="h-12 sm:h-auto px-10 font-black uppercase text-[10px] tracking-widest"
             icon={<Copy size={14} />}
           >
             Copy Link
