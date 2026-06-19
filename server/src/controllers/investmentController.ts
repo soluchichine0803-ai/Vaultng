@@ -3,6 +3,7 @@ import type { AuthRequest } from '../types/auth';
 import prisma from '../utils/prisma';
 import { InvestmentStatus, TransactionType } from '@prisma/client';
 import { walletService } from '../services/walletService';
+import { referralService } from '../services/referralService';
 
 export const createInvestment = async (req: AuthRequest, res: Response) => {
   try {
@@ -102,6 +103,14 @@ export const createInvestment = async (req: AuthRequest, res: Response) => {
         }
         throw error;
       }
+
+      // 3. Process referral commission if applicable
+      await referralService.processFirstInvestmentCommission(
+        userId,
+        newInvestment.id,
+        investmentAmount,
+        tx
+      );
 
       return newInvestment;
     });
