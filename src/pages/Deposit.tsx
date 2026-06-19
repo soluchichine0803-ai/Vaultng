@@ -13,14 +13,7 @@ import { formatCurrency } from '../utils/formatters';
 import Card from '../components/ui/Card';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
-
-interface DepositRequest {
-  id: string;
-  amount: number;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
-  reference: string;
-  createdAt: string;
-}
+import { depositService, type DepositRequest } from '../services/depositService';
 
 const Deposit: React.FC = () => {
   const { user, token } = useAuthStore();
@@ -32,15 +25,8 @@ const Deposit: React.FC = () => {
 
   const fetchHistory = async () => {
     try {
-      const response = await fetch('/api/deposits/me', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setDeposits(data);
-      }
+      const data = await depositService.getDepositHistory();
+      setDeposits(data);
     } catch (error) {
       console.error('Failed to fetch deposit history:', error);
     } finally {
@@ -63,27 +49,14 @@ const Deposit: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch('/api/deposits', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ amount: numericAmount })
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        addToast('Deposit request submitted successfully', 'success');
-        setAmount('');
-        // Refresh history
-        setDeposits([data, ...deposits]);
-      } else {
-        addToast(data.message || 'Failed to submit deposit request', 'error');
-      }
-    } catch (error) {
-      addToast('An error occurred. Please try again.', 'error');
+      const data = await depositService.createDeposit(numericAmount);
+      addToast('Deposit request submitted successfully', 'success');
+      setAmount('');
+      // Refresh history
+      setDeposits([data, ...deposits]);
+    } catch (error: any) {
+      const message = error.response?.data?.message || 'Failed to submit deposit request';
+      addToast(message, 'error');
     } finally {
       setIsSubmitting(false);
     }
