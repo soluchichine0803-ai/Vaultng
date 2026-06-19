@@ -10,12 +10,13 @@ import ParticleBackground from '../components/ui/ParticleBackground';
 const Register: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { register, isLoading, error, setError } = useAuthStore();
+  const { register, isLoading, error } = useAuthStore();
 
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     email: '',
+    countryCode: '+234',
     phone: '',
     password: '',
     confirmPassword: '',
@@ -30,14 +31,23 @@ const Register: React.FC = () => {
     if (ref) {
       setFormData(prev => ({ ...prev, referralCode: ref }));
     }
-    setError(null);
-  }, [searchParams, setError]);
+  }, [searchParams]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
+
+    let processedValue: string | boolean = type === 'checkbox' ? checked : value;
+
+    if (name === 'phone') {
+      // Numeric input only
+      processedValue = value.replace(/\D/g, '');
+    }
+
     setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value,
+      [name]: processedValue,
     }));
     if (validationErrors[name]) {
       setValidationErrors(prev => {
@@ -55,7 +65,22 @@ const Register: React.FC = () => {
     if (!formData.email) errors.email = 'Email is required';
     else if (!/\S+@\S+\.\S+/.test(formData.email)) errors.email = 'Email is invalid';
 
-    if (!formData.phone) errors.phone = 'Phone number is required';
+    if (!formData.phone) {
+      errors.phone = 'Phone number is required';
+    } else {
+      const phoneDigits = formData.phone.replace(/\D/g, '');
+      if (formData.countryCode === '+234') {
+        // Nigerian numbers: 10 digits (no leading 0) or 11 digits (leading 0)
+        const isTenDigits = phoneDigits.length === 10 && !phoneDigits.startsWith('0');
+        const isElevenDigits = phoneDigits.length === 11 && phoneDigits.startsWith('0');
+
+        if (!isTenDigits && !isElevenDigits) {
+          errors.phone = 'Invalid phone number format';
+        }
+      } else if (phoneDigits.length < 7 || phoneDigits.length > 15) {
+        errors.phone = 'Invalid phone number length';
+      }
+    }
 
     if (!formData.password) errors.password = 'Password is required';
     else if (formData.password.length < 6) errors.password = 'Password must be at least 6 characters';
@@ -77,7 +102,18 @@ const Register: React.FC = () => {
     if (!validate()) return;
 
     try {
-      await register(formData);
+      // Normalize phone number: remove leading 0 if present for consistency with country code
+      let normalizedPhone = formData.phone.replace(/\D/g, '');
+      if (formData.countryCode === '+234' && normalizedPhone.length === 11 && normalizedPhone.startsWith('0')) {
+        normalizedPhone = normalizedPhone.substring(1);
+      }
+
+      const submissionData = {
+        ...formData,
+        phone: `${formData.countryCode}${normalizedPhone}`
+      };
+
+      await register(submissionData);
       navigate('/login');
     } catch (err) {
       // Error handled by store
@@ -132,15 +168,38 @@ const Register: React.FC = () => {
             onChange={handleInputChange}
             error={validationErrors.email}
           />
-          <Input
-            label="Phone Number"
-            name="phone"
-            type="tel"
-            placeholder="+234..."
-            value={formData.phone}
-            onChange={handleInputChange}
-            error={validationErrors.phone}
-          />
+
+          <div className="space-y-1.5">
+            <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider ml-1">
+              Phone Number
+            </label>
+            <div className="flex gap-2">
+              <div className="w-28 shrink-0">
+                <Input
+                  name="countryCode"
+                  variant="select"
+                  value={formData.countryCode}
+                  onChange={handleInputChange}
+                  options={[
+                    { value: '+234', label: '🇳🇬 +234' },
+                    { value: '+1', label: '🇺🇸 +1' },
+                    { value: '+44', label: '🇬🇧 +44' },
+                  ]}
+                />
+              </div>
+              <div className="flex-1">
+                <Input
+                  name="phone"
+                  type="tel"
+                  inputMode="numeric"
+                  placeholder="803 711 2873"
+                  value={formData.phone}
+                  onChange={handleInputChange}
+                  error={validationErrors.phone}
+                />
+              </div>
+            </div>
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <Input
               label="Password"

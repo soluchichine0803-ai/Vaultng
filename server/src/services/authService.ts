@@ -26,19 +26,6 @@ const generateReferralCode = (): string => {
 export const authService = {
   register: async (data: RegisterCredentials) => {
     const username = `${data.firstName} ${data.lastName}`;
-    // Check if user already exists
-    const existingUser = await prisma.user.findFirst({
-      where: {
-        OR: [
-          { email: data.email },
-          { username: username }
-        ]
-      }
-    });
-
-    if (existingUser) {
-      throw new Error('User with this email or name already exists');
-    }
 
     // Hash password
     const passwordHash = await bcrypt.hash(data.password, 10);
@@ -58,36 +45,56 @@ export const authService = {
     const normalizedPhone = data.phone.replace(/[\s\-\(\)]/g, '');
 
     // Create user and welcome bonus atomically
-    const { user, token } = await prisma.$transaction(async (tx) => {
-      const newUser = await tx.user.create({
-        data: {
-          email: data.email,
-          username: username,
-          passwordHash,
-          phone: normalizedPhone,
-          referralCode: generateReferralCode(),
-          referredBy,
-          availableBalance: 0,
-          lockedBalance: 0,
-        }
+    try {
+      const { user, token } = await prisma.$transaction(async (tx) => {
+        const newUser = await tx.user.create({
+          data: {
+            email: data.email,
+            username: username,
+            passwordHash,
+            phone: normalizedPhone,
+            referralCode: generateReferralCode(),
+            referredBy,
+            availableBalance: 0,
+            lockedBalance: 0,
+          }
+        });
+
+        // Credit welcome bonus
+        await walletService.credit(
+          newUser.id,
+          1000,
+          TransactionType.WELCOME_BONUS,
+          'Welcome bonus for new registration',
+          'WELCOME_BONUS',
+          tx
+        );
+
+        const token = generateToken({ id: newUser.id, email: newUser.email, role: newUser.role });
+
+        return { user: newUser, token };
       });
 
-      // Credit welcome bonus
-      await walletService.credit(
-        newUser.id,
-        1000,
-        TransactionType.WELCOME_BONUS,
-        'Welcome bonus for new registration',
-        'WELCOME_BONUS',
-        tx
-      );
+      return { user, token };
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      if (error.code === 'P2002') {
+        const target = error.meta?.target as string[];
+        // Some Prisma versions/configurations might return target as a string instead of array
+        const targetStr = Array.isArray(target) ? target.join(',') : String(target || '');
 
-      const token = generateToken({ id: newUser.id, email: newUser.email, role: newUser.role });
-
-      return { user: newUser, token };
-    });
-
-    return { user, token };
+        if (targetStr.includes('email')) {
+          throw new Error('An account with this email already exists.');
+        }
+        if (targetStr.includes('phone')) {
+          throw new Error('This phone number is already registered.');
+        }
+        if (targetStr.includes('username')) {
+          throw new Error('A user with this name already exists.');
+        }
+      }
+      throw error;
+    }
   },
 
   login: async (credentials: LoginCredentials) => {
