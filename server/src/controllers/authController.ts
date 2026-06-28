@@ -51,7 +51,7 @@ export const login = async (req: AuthRequest, res: Response) => {
       try {
         updatedUser = await prisma.$transaction(async (tx) => {
           // Double check within transaction
-          const currentUser = await tx.user.findUnique({ where: { id: user.id } });
+          const currentUser = await tx.user.findUniqueOrThrow({ where: { id: user.id } });
           const currentLastBonus = currentUser?.lastLoginBonusAt ? new Date(currentUser.lastLoginBonusAt) : null;
           const currentLastBonusDate = currentLastBonus ? new Date(currentLastBonus.getFullYear(), currentLastBonus.getMonth(), currentLastBonus.getDate()) : null;
 
