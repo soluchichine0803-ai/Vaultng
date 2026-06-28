@@ -1,13 +1,49 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { pageTransition } from '../lib/animations';
 import Card from '../components/ui/Card';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import { useAuthStore } from '../store/authStore';
+import { withdrawalService } from '../services/withdrawalService';
+import { toast } from 'react-hot-toast';
 
 const Withdraw: React.FC = () => {
-  const { user } = useAuthStore();
+  const { user, fetchUser } = useAuthStore();
+  const [amount, setAmount] = useState('');
+  const [bankName, setBankName] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
+  const [accountName, setAccountName] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleWithdraw = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!amount || !bankName || !accountNumber || !accountName) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      await withdrawalService.createWithdrawal({
+        amount: Number(amount),
+        bankName,
+        accountNumber,
+        accountName,
+      });
+      toast.success('Withdrawal request submitted successfully');
+      setAmount('');
+      setBankName('');
+      setAccountNumber('');
+      setAccountName('');
+      fetchUser();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to submit withdrawal request');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <motion.div variants={pageTransition} initial="initial" animate="animate" exit="exit" className="space-y-6">
@@ -23,24 +59,51 @@ const Withdraw: React.FC = () => {
             <p className="text-2xl lg:text-3xl font-bold text-white font-mono">₦{(user?.availableBalance || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
           </div>
 
-          <Input
-            label="Withdrawal Amount"
-            type="number"
-            placeholder="0.00"
-          />
+          <form onSubmit={handleWithdraw} className="space-y-4">
+            <Input
+              label="Withdrawal Amount"
+              type="number"
+              placeholder="0.00"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              required
+            />
 
-          <Input
-            label="Destination Account"
-            variant="select"
-            options={[
-              { value: 'primary_bank', label: 'Primary Bank' },
-              { value: 'usdt_wallet', label: 'USDT Wallet (TRC-20)' },
-            ]}
-          />
+            <Input
+              label="Bank Name"
+              placeholder="Enter bank name"
+              value={bankName}
+              onChange={(e) => setBankName(e.target.value)}
+              required
+            />
 
-          <div className="pt-2">
-            <Button variant="primary" className="w-full h-14 font-black uppercase text-xs tracking-widest">Confirm Withdrawal</Button>
-          </div>
+            <Input
+              label="Account Number"
+              placeholder="Enter account number"
+              value={accountNumber}
+              onChange={(e) => setAccountNumber(e.target.value)}
+              required
+            />
+
+            <Input
+              label="Account Name"
+              placeholder="Enter account name"
+              value={accountName}
+              onChange={(e) => setAccountName(e.target.value)}
+              required
+            />
+
+            <div className="pt-2">
+              <Button
+                type="submit"
+                variant="primary"
+                className="w-full h-14 font-black uppercase text-xs tracking-widest"
+                isLoading={isLoading}
+              >
+                Confirm Withdrawal
+              </Button>
+            </div>
+          </form>
         </Card>
       </div>
     </motion.div>

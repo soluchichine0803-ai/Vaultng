@@ -9,6 +9,7 @@ export interface Investment {
   roiPercentSnapshot: number;
   durationHoursSnapshot: number;
   maturityDate: string;
+  nextRoiPayoutAt?: string;
   status: InvestmentStatus;
   createdAt: string;
   updatedAt: string;
@@ -20,6 +21,5 @@ export interface Investment {
 }
 
 export interface CreateInvestmentData {
-  planId: string;
   amount: number;
 }

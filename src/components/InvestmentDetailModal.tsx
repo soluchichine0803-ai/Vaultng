@@ -74,6 +74,17 @@ const InvestmentDetailModal: React.FC<InvestmentDetailModalProps> = ({ isOpen, o
               {new Date(investment.maturityDate).toLocaleDateString()} {new Date(investment.maturityDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </span>
           </div>
+          {investment.nextRoiPayoutAt && (
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2 text-text-muted">
+                <Calendar size={14} />
+                <span className="text-[10px] font-bold uppercase">Next ROI Payout</span>
+              </div>
+              <span className="text-xs font-medium text-text-primary">
+                {new Date(investment.nextRoiPayoutAt).toLocaleDateString()}
+              </span>
+            </div>
+          )}
         </div>
 
         <div className="flex items-start gap-2.5 px-1 opacity-70">

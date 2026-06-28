@@ -1,6 +1,9 @@
 import type { Response } from 'express';
 import { authService } from '../services/authService';
 import type { AuthRequest } from '../types/auth';
+import { walletService } from '../services/walletService';
+import { TransactionType } from '@prisma/client';
+import prisma from '../utils/prisma';
 
 const formatUserResponse = (user: any) => {
   const { passwordHash, ...userWithoutPassword } = user;
@@ -35,10 +38,50 @@ export const register = async (req: AuthRequest, res: Response) => {
 export const login = async (req: AuthRequest, res: Response) => {
   try {
     const { user, token } = await authService.login(req.body);
+
+    // Process Daily Login Bonus
+    let updatedUser = user;
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    const lastBonus = user.lastLoginBonusAt ? new Date(user.lastLoginBonusAt) : null;
+    const lastBonusDate = lastBonus ? new Date(lastBonus.getFullYear(), lastBonus.getMonth(), lastBonus.getDate()) : null;
+
+    if (!lastBonusDate || lastBonusDate.getTime() < today.getTime()) {
+      try {
+        updatedUser = await prisma.$transaction(async (tx) => {
+          // Double check within transaction
+          const currentUser = await tx.user.findUnique({ where: { id: user.id } });
+          const currentLastBonus = currentUser?.lastLoginBonusAt ? new Date(currentUser.lastLoginBonusAt) : null;
+          const currentLastBonusDate = currentLastBonus ? new Date(currentLastBonus.getFullYear(), currentLastBonus.getMonth(), currentLastBonus.getDate()) : null;
+
+          if (!currentLastBonusDate || currentLastBonusDate.getTime() < today.getTime()) {
+            await walletService.credit(
+              user.id,
+              100,
+              TransactionType.ADJUSTMENT, // Or a more specific type if we add one, but instructions said Record Transaction
+              'Daily login reward',
+              'DAILY_LOGIN_BONUS',
+              tx
+            );
+
+            return await tx.user.update({
+              where: { id: user.id },
+              data: { lastLoginBonusAt: now }
+            });
+          }
+          return currentUser;
+        });
+      } catch (err) {
+        console.error('Error awarding daily login bonus:', err);
+        // We don't fail the login if the bonus fails
+      }
+    }
+
     res.status(200).json({
       status: 'success',
       data: {
-        user: formatUserResponse(user),
+        user: formatUserResponse(updatedUser),
         token,
       },
     });

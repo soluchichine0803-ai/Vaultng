@@ -6,6 +6,8 @@ import Deposit from './pages/Deposit';
 import Withdraw from './pages/Withdraw';
 import Referrals from './pages/Referrals';
 import Portfolio from './pages/Portfolio';
+import TermsOfService from './pages/TermsOfService';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
@@ -55,6 +57,8 @@ function App() {
           <Route path="withdraw" element={<Withdraw />} />
           <Route path="referrals" element={<Referrals />} />
           <Route path="portfolio" element={<Portfolio />} />
+          <Route path="terms" element={<TermsOfService />} />
+          <Route path="privacy" element={<PrivacyPolicy />} />
           {/* Add Profile route when ready */}
         </Route>
 

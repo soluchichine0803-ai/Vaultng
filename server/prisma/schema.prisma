@@ -75,6 +75,7 @@ model User {
   lockedBalance    Decimal  @default(0) @db.Decimal(15, 2)
   frozen           Boolean  @default(false)
   role             UserRole @default(USER)
+  lastLoginBonusAt DateTime?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
@@ -140,6 +141,7 @@ model Investment {
   roiPercentSnapshot    Decimal          @db.Decimal(5, 2)
   durationHoursSnapshot Int
   maturityDate          DateTime
+  nextRoiPayoutAt       DateTime?
   status                InvestmentStatus @default(ACTIVE)
   createdAt             DateTime         @default(now())
   updatedAt             DateTime         @updatedAt
@@ -178,10 +180,11 @@ model Withdrawal {
   bankName        String
   accountNumber   String
   accountName     String
-  status          WithdrawalStatus @default(PENDING)
-  approvedBy      String?
-  rejectionReason String?
-  createdAt       DateTime         @default(now())
+  status            WithdrawalStatus @default(PENDING)
+  isLargeWithdrawal Boolean          @default(false)
+  approvedBy        String?
+  rejectionReason   String?
+  createdAt         DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
 
   user            User             @relation(fields: [userId], references: [id])

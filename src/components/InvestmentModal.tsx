@@ -65,7 +65,6 @@ const InvestmentModal: React.FC<InvestmentModalProps> = ({
     try {
       setIsSubmitting(true);
       await investmentService.createInvestment({
-        planId: plan.id,
         amount: investmentAmount,
       });
       toast.success('Investment created successfully!');
