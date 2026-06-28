@@ -246,7 +246,7 @@ const Register: React.FC = () => {
               className="mt-1 accent-purple-primary w-4 h-4 rounded border-white/10 bg-white/5"
             />
             <label htmlFor="terms" className="text-[11px] text-text-muted leading-relaxed">
-              I agree to the <span className="text-purple-soft font-bold">Terms of Service</span> and <span className="text-purple-soft font-bold">Privacy Policy</span>, acknowledging the financial risks involved.
+              I agree to the <Link to="/terms" className="text-purple-soft font-bold hover:underline">Terms of Service</Link> and <Link to="/privacy" className="text-purple-soft font-bold hover:underline">Privacy Policy</Link>, acknowledging the financial risks involved.
             </label>
           </div>
           {validationErrors.agreeToTerms && (

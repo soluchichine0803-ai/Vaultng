@@ -57,6 +57,7 @@ export const authService = {
             referredBy,
             availableBalance: 0,
             lockedBalance: 0,
+            lastLoginBonusAt: new Date(),
           }
         });
 

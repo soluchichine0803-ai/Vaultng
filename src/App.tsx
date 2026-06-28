@@ -40,6 +40,8 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/ref/:referralCode" element={<ReferralRedirect />} />
+        <Route path="/terms" element={<TermsOfService />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
 
         {/* Protected Routes (Under AppLayout) */}
         <Route
@@ -57,8 +59,6 @@ function App() {
           <Route path="withdraw" element={<Withdraw />} />
           <Route path="referrals" element={<Referrals />} />
           <Route path="portfolio" element={<Portfolio />} />
-          <Route path="terms" element={<TermsOfService />} />
-          <Route path="privacy" element={<PrivacyPolicy />} />
           {/* Add Profile route when ready */}
         </Route>
 
