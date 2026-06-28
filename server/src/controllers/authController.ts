@@ -42,20 +42,28 @@ export const login = async (req: AuthRequest, res: Response) => {
     // Process Daily Login Bonus
     let updatedUser = user;
     const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    // Get current date string in Africa/Lagos
+    const lagosFormatter = new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Africa/Lagos',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    const currentLagosDate = lagosFormatter.format(now);
 
     const lastBonus = user.lastLoginBonusAt ? new Date(user.lastLoginBonusAt) : null;
-    const lastBonusDate = lastBonus ? new Date(lastBonus.getFullYear(), lastBonus.getMonth(), lastBonus.getDate()) : null;
+    const lastBonusLagosDate = lastBonus ? lagosFormatter.format(lastBonus) : null;
 
-    if (!lastBonusDate || lastBonusDate.getTime() < today.getTime()) {
+    if (!lastBonusLagosDate || lastBonusLagosDate !== currentLagosDate) {
       try {
         updatedUser = await prisma.$transaction(async (tx) => {
           // Double check within transaction
           const currentUser = await tx.user.findUnique({ where: { id: user.id } });
           const currentLastBonus = currentUser?.lastLoginBonusAt ? new Date(currentUser.lastLoginBonusAt) : null;
-          const currentLastBonusDate = currentLastBonus ? new Date(currentLastBonus.getFullYear(), currentLastBonus.getMonth(), currentLastBonus.getDate()) : null;
+          const currentLastBonusLagosDate = currentLastBonus ? lagosFormatter.format(currentLastBonus) : null;
 
-          if (!currentLastBonusDate || currentLastBonusDate.getTime() < today.getTime()) {
+          if (!currentLastBonusLagosDate || currentLastBonusLagosDate !== currentLagosDate) {
             await walletService.credit(
               user.id,
               100,
@@ -70,6 +78,7 @@ export const login = async (req: AuthRequest, res: Response) => {
               data: { lastLoginBonusAt: now }
             });
           }
+          if (!currentUser) throw new Error('User not found');
           return currentUser;
         });
       } catch (err) {

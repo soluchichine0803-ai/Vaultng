@@ -98,7 +98,7 @@ const Withdraw: React.FC = () => {
                 type="submit"
                 variant="primary"
                 className="w-full h-14 font-black uppercase text-xs tracking-widest"
-                isLoading={isLoading}
+                loading={isLoading}
               >
                 Confirm Withdrawal
               </Button>
