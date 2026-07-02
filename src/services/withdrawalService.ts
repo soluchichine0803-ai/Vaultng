@@ -7,12 +7,12 @@ export const withdrawalService = {
     accountNumber: string;
     accountName: string;
   }) => {
-    const response = await api.post('/api/withdrawals', data);
+    const response = await api.post('/withdrawals', data);
     return response.data;
   },
 
   getMyWithdrawals: async () => {
-    const response = await api.get('/api/withdrawals/me');
+    const response = await api.get('/withdrawals/me');
     return response.data.data;
   },
 };
