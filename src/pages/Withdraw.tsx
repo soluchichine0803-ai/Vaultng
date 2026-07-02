@@ -24,6 +24,56 @@ const Withdraw: React.FC = () => {
       return;
     }
 
+    const withdrawalAmount = Number(amount);
+    if (isNaN(withdrawalAmount)) {
+      toast.error('Invalid withdrawal amount');
+      return;
+    }
+
+    // 1. Minimum withdrawal
+    if (withdrawalAmount < 3000) {
+      toast.error('Minimum withdrawal amount is ₦3,000');
+      return;
+    }
+
+    // 2. Sufficient Balance
+    if (user && withdrawalAmount > Number(user.availableBalance)) {
+      toast.error('Insufficient available balance');
+      return;
+    }
+
+    // 3. Time and Day Validation (WAT)
+    const now = new Date();
+    const lagosFormatter = new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Africa/Lagos',
+      hour: 'numeric',
+      hour12: false,
+      weekday: 'long',
+    });
+
+    const parts = lagosFormatter.formatToParts(now);
+    const lagosHour = parseInt(parts.find(p => p.type === 'hour')?.value || '0', 10);
+    const lagosDay = parts.find(p => p.type === 'weekday')?.value || '';
+
+    // Time window: 10:00 AM – 6:00 PM
+    if (lagosHour < 10 || lagosHour >= 18) {
+      toast.error('Withdrawals are only allowed between 10:00 AM and 6:00 PM WAT');
+      return;
+    }
+
+    // Day restriction
+    if (withdrawalAmount >= 3000 && withdrawalAmount <= 50000) {
+      if (lagosDay !== 'Tuesday') {
+        toast.error('Withdrawals between ₦3,000 and ₦50,000 are only allowed on Tuesdays');
+        return;
+      }
+    } else if (withdrawalAmount > 50000) {
+      if (lagosDay !== 'Thursday') {
+        toast.error('Withdrawals above ₦50,000 are only allowed on Thursdays');
+        return;
+      }
+    }
+
     try {
       setIsLoading(true);
       await withdrawalService.createWithdrawal({
@@ -67,6 +117,7 @@ const Withdraw: React.FC = () => {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               required
+              className="no-spinner"
             />
 
             <Input
