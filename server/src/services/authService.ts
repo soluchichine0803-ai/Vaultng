@@ -153,5 +153,30 @@ export const authService = {
     // Placeholder logic
     console.log('Password reset logic executed');
     return;
+  },
+
+  updateProfile: async (userId: string, data: { username?: string, email?: string, phone?: string }) => {
+    return prisma.user.update({
+      where: { id: userId },
+      data: {
+        username: data.username,
+        email: data.email,
+        phone: data.phone,
+      },
+    });
+  },
+
+  changePassword: async (userId: string, data: { currentPassword: string, newPassword: string }) => {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new Error('User not found');
+
+    const isPasswordValid = await bcrypt.compare(data.currentPassword, user.passwordHash);
+    if (!isPasswordValid) throw new Error('Invalid current password');
+
+    const newPasswordHash = await bcrypt.hash(data.newPassword, 10);
+    return prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash: newPasswordHash },
+    });
   }
 };
