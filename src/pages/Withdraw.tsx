@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { pageTransition } from '../lib/animations';
 import Card from '../components/ui/Card';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
+import Badge from '../components/ui/Badge';
 import { useAuthStore } from '../store/authStore';
 import { withdrawalService } from '../services/withdrawalService';
 import { toast } from 'react-hot-toast';
-import { AlertCircle, Clock, Calendar } from 'lucide-react';
+import { AlertCircle, Clock, Calendar, History, CheckCircle2, XCircle, Timer } from 'lucide-react';
+import { formatCurrency } from '../utils/formatters';
 
 const Withdraw: React.FC = () => {
   const { user, fetchUser } = useAuthStore();
@@ -16,8 +18,26 @@ const Withdraw: React.FC = () => {
   const [accountNumber, setAccountNumber] = useState('');
   const [accountName, setAccountName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [withdrawals, setWithdrawals] = useState<any[]>([]);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(true);
 
   const withdrawalAmount = Number(amount);
+
+  const fetchHistory = async () => {
+    try {
+      setIsHistoryLoading(true);
+      const data = await withdrawalService.getMyWithdrawals();
+      setWithdrawals(data);
+    } catch (error) {
+      console.error('Failed to fetch withdrawal history', error);
+    } finally {
+      setIsHistoryLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchHistory();
+  }, []);
 
   // 1. Time and Day Calculation (WAT)
   const now = new Date();
@@ -95,6 +115,7 @@ const Withdraw: React.FC = () => {
       setAccountNumber('');
       setAccountName('');
       fetchUser();
+      fetchHistory();
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to submit withdrawal request');
     } finally {
@@ -206,6 +227,98 @@ const Withdraw: React.FC = () => {
             </div>
           </form>
         </Card>
+
+        {/* Withdrawal History Section */}
+        <section className="space-y-4 pt-4">
+          <div className="flex items-center justify-between px-1">
+            <h2 className="text-base font-bold flex items-center gap-2 tracking-tight">
+              <History size={18} className="text-purple-primary" />
+              Withdrawal History
+            </h2>
+            <Badge variant="purple" size="sm" className="text-[8px] px-1.5 py-0">RECENT</Badge>
+          </div>
+
+          <Card className="overflow-hidden border-white/[0.02]">
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="bg-white/[0.02] border-b border-white/[0.03]">
+                    <th className="px-6 py-4 text-left text-[9px] font-black uppercase tracking-widest text-text-muted">Transaction</th>
+                    <th className="px-6 py-4 text-left text-[9px] font-black uppercase tracking-widest text-text-muted">Destination</th>
+                    <th className="px-6 py-4 text-left text-[9px] font-black uppercase tracking-widest text-text-muted">Status</th>
+                    <th className="px-6 py-4 text-right text-[9px] font-black uppercase tracking-widest text-text-muted">Amount</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/[0.03]">
+                  {isHistoryLoading ? (
+                    Array.from({ length: 3 }).map((_, i) => (
+                      <tr key={i} className="animate-pulse">
+                        <td colSpan={4} className="px-6 py-4"><div className="h-10 bg-white/5 rounded-lg" /></td>
+                      </tr>
+                    ))
+                  ) : withdrawals.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="px-6 py-20 text-center">
+                        <div className="flex flex-col items-center justify-center opacity-30">
+                          <History size={32} className="mb-2" />
+                          <p className="text-xs font-bold uppercase tracking-tighter">No withdrawal records found</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    withdrawals.map((w) => {
+                      const getStatusIcon = (status: string) => {
+                        switch (status) {
+                          case 'APPROVED': return <CheckCircle2 size={14} className="text-success" />;
+                          case 'REJECTED': return <XCircle size={14} className="text-danger" />;
+                          case 'PENDING': return <Timer size={14} className="text-purple-soft" />;
+                          default: return <History size={14} className="text-text-muted" />;
+                        }
+                      };
+
+                      const maskAccountNumber = (acc: string) => {
+                        if (!acc) return 'N/A';
+                        return `******${acc.slice(-4)}`;
+                      };
+
+                      return (
+                        <tr key={w.id} className="hover:bg-white/[0.01] transition-colors group">
+                          <td className="px-6 py-4">
+                            <div className="space-y-0.5">
+                              <p className="text-xs font-bold text-white">Withdrawal Outflow</p>
+                              <p className="text-[10px] text-text-muted">{new Date(w.createdAt).toLocaleDateString()} • {new Date(w.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="space-y-0.5">
+                              <p className="text-xs font-bold text-text-secondary">{w.bankName}</p>
+                              <p className="text-[10px] text-text-muted font-mono">{maskAccountNumber(w.accountNumber)}</p>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-2">
+                              {getStatusIcon(w.status)}
+                              <span className={`text-[10px] font-black uppercase tracking-widest ${
+                                w.status === 'APPROVED' ? 'text-success' :
+                                w.status === 'REJECTED' ? 'text-danger' :
+                                'text-purple-soft'
+                              }`}>
+                                {w.status}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <p className="text-sm font-bold text-white">{formatCurrency(w.amount)}</p>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </section>
       </div>
     </motion.div>
   );

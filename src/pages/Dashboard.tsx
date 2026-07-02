@@ -343,10 +343,6 @@ const Dashboard: React.FC = () => {
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle2 size={12} className="text-success" />
-                <span className="text-[10px] font-bold text-text-primary tracking-tight">Biometric Verification Active</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 size={12} className="text-success" />
                 <span className="text-[10px] font-bold text-text-primary tracking-tight">Vault Network Operational</span>
               </div>
             </div>
