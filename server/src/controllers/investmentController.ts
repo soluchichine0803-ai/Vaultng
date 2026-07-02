@@ -7,7 +7,7 @@ import { referralService } from '../services/referralService';
 
 export const createInvestment = async (req: AuthRequest, res: Response) => {
   try {
-    const { planId, amount } = req.body;
+    const { amount } = req.body;
     const userId = req.user?.id;
 
     if (!userId) {
@@ -17,52 +17,51 @@ export const createInvestment = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    if (!planId || !amount) {
+    if (!amount) {
       return res.status(400).json({
         status: 'error',
-        message: 'Plan ID and amount are required',
+        message: 'Investment amount is required',
       });
     }
 
     const investmentAmount = Number(amount);
-    if (isNaN(investmentAmount) || investmentAmount <= 0) {
+    if (isNaN(investmentAmount) || investmentAmount < 3000) {
       return res.status(400).json({
         status: 'error',
-        message: 'Invalid investment amount',
+        message: 'Minimum investment amount is ₦3,000',
       });
     }
 
-    // Validate plan
-    const plan = await prisma.investmentPlan.findUnique({
-      where: { id: planId },
+    // Determine the appropriate plan based on amount
+    const plan = await prisma.investmentPlan.findFirst({
+      where: {
+        active: true,
+        minAmount: { lte: investmentAmount },
+        maxAmount: { gte: investmentAmount },
+      },
     });
 
-    if (!plan || !plan.active) {
-      return res.status(404).json({
-        status: 'error',
-        message: 'Investment plan not found or inactive',
-      });
-    }
-
-    // Validate amount against plan limits
-    if (investmentAmount < Number(plan.minAmount)) {
+    if (!plan) {
       return res.status(400).json({
         status: 'error',
-        message: `Minimum investment amount for this plan is ${plan.minAmount}`,
-      });
-    }
-
-    if (investmentAmount > Number(plan.maxAmount)) {
-      return res.status(400).json({
-        status: 'error',
-        message: `Maximum investment amount for this plan is ${plan.maxAmount}`,
+        message: 'No suitable investment package found for this amount',
       });
     }
 
     // Calculate expected profit and maturity date
-    const expectedProfit = investmentAmount * (Number(plan.roiPercent) / 100);
+    // Monthly ROI 30%. Expected profit is based on monthly rate for the total duration.
+    // Package A: 60 days (2 months) -> 60% total profit
+    // Package B: 90 days (3 months) -> 90% total profit
+    const months = plan.durationHours / (30 * 24);
+    const totalRoiPercent = Number(plan.roiPercent) * months;
+    const expectedProfit = investmentAmount * (totalRoiPercent / 100);
+
     const maturityDate = new Date();
     maturityDate.setHours(maturityDate.getHours() + plan.durationHours);
+
+    // Initial payout date (e.g., 30 days from now)
+    const nextRoiPayoutAt = new Date();
+    nextRoiPayoutAt.setDate(nextRoiPayoutAt.getDate() + 30);
 
     // Create investment and update wallet atomically
     const investment = await prisma.$transaction(async (tx) => {
@@ -70,12 +69,13 @@ export const createInvestment = async (req: AuthRequest, res: Response) => {
       const newInvestment = await tx.investment.create({
         data: {
           userId,
-          planId,
+          planId: plan.id,
           amount: investmentAmount,
           expectedProfit,
           roiPercentSnapshot: Number(plan.roiPercent),
           durationHoursSnapshot: plan.durationHours,
           maturityDate,
+          nextRoiPayoutAt,
           status: InvestmentStatus.ACTIVE,
         },
         include: {
@@ -149,6 +149,19 @@ export const getMyInvestments = async (req: AuthRequest, res: Response) => {
         message: 'Unauthorized',
       });
     }
+
+    // Check for expired investments and update their status
+    const now = new Date();
+    await prisma.investment.updateMany({
+      where: {
+        userId,
+        status: InvestmentStatus.ACTIVE,
+        maturityDate: { lte: now },
+      },
+      data: {
+        status: InvestmentStatus.COMPLETED,
+      },
+    });
 
     const investments = await prisma.investment.findMany({
       where: { userId },

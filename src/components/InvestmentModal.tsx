@@ -65,7 +65,6 @@ const InvestmentModal: React.FC<InvestmentModalProps> = ({
     try {
       setIsSubmitting(true);
       await investmentService.createInvestment({
-        planId: plan.id,
         amount: investmentAmount,
       });
       toast.success('Investment created successfully!');
@@ -154,7 +153,7 @@ const InvestmentModal: React.FC<InvestmentModalProps> = ({
                 min={plan.minAmount}
                 max={plan.maxAmount}
                 autoFocus
-                className="text-lg font-bold h-14"
+                className="text-lg font-bold h-14 no-spinner"
               />
               <div className="flex justify-between px-1">
                 <span className="text-[9px] text-text-muted font-bold">
