@@ -7,6 +7,7 @@ import Button from '../components/ui/Button';
 import { useAuthStore } from '../store/authStore';
 import { withdrawalService } from '../services/withdrawalService';
 import { toast } from 'react-hot-toast';
+import { AlertCircle, Clock, Calendar } from 'lucide-react';
 
 const Withdraw: React.FC = () => {
   const { user, fetchUser } = useAuthStore();
@@ -16,6 +17,57 @@ const Withdraw: React.FC = () => {
   const [accountName, setAccountName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  const withdrawalAmount = Number(amount);
+
+  // 1. Time and Day Calculation (WAT)
+  const now = new Date();
+  const lagosFormatter = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Africa/Lagos',
+    hour: 'numeric',
+    hour12: false,
+    weekday: 'long',
+  });
+
+  const parts = lagosFormatter.formatToParts(now);
+  const lagosHour = parseInt(parts.find(p => p.type === 'hour')?.value || '0', 10);
+  const lagosDay = parts.find(p => p.type === 'weekday')?.value || '';
+
+  const isTimeValid = lagosHour >= 10 && lagosHour < 18;
+  const isDevelopment = import.meta.env.DEV;
+
+  // Eligibility Checks
+  const getEligibilityError = () => {
+    // Development bypass
+    if (isDevelopment) return null;
+
+    if (!isTimeValid) {
+      return "Withdrawals are available daily between 10:00 AM and 6:00 PM (Africa/Lagos).";
+    }
+
+    if (amount) {
+      if (withdrawalAmount < 3000) {
+        return "Minimum withdrawal amount is ₦3,000.";
+      }
+
+      if (withdrawalAmount <= 50000 && lagosDay !== 'Tuesday') {
+        return "Withdrawals between ₦3,000 and ₦50,000 are processed on Tuesdays.";
+      }
+
+      if (withdrawalAmount > 50000 && lagosDay !== 'Thursday') {
+        return "Withdrawals above ₦50,000 are processed on Thursdays.";
+      }
+
+      if (user && withdrawalAmount > Number(user.availableBalance)) {
+        return "Insufficient available balance.";
+      }
+    }
+
+    return null;
+  };
+
+  const eligibilityError = getEligibilityError();
+  const isSubmitDisabled = !!eligibilityError || !amount || !bankName || !accountNumber || !accountName || isLoading;
+
   const handleWithdraw = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -24,54 +76,9 @@ const Withdraw: React.FC = () => {
       return;
     }
 
-    const withdrawalAmount = Number(amount);
-    if (isNaN(withdrawalAmount)) {
-      toast.error('Invalid withdrawal amount');
+    if (eligibilityError && !isDevelopment) {
+      toast.error(eligibilityError);
       return;
-    }
-
-    // 1. Minimum withdrawal
-    if (withdrawalAmount < 3000) {
-      toast.error('Minimum withdrawal amount is ₦3,000');
-      return;
-    }
-
-    // 2. Sufficient Balance
-    if (user && withdrawalAmount > Number(user.availableBalance)) {
-      toast.error('Insufficient available balance');
-      return;
-    }
-
-    // 3. Time and Day Validation (WAT)
-    const now = new Date();
-    const lagosFormatter = new Intl.DateTimeFormat('en-GB', {
-      timeZone: 'Africa/Lagos',
-      hour: 'numeric',
-      hour12: false,
-      weekday: 'long',
-    });
-
-    const parts = lagosFormatter.formatToParts(now);
-    const lagosHour = parseInt(parts.find(p => p.type === 'hour')?.value || '0', 10);
-    const lagosDay = parts.find(p => p.type === 'weekday')?.value || '';
-
-    // Time window: 10:00 AM – 6:00 PM
-    if (lagosHour < 10 || lagosHour >= 18) {
-      toast.error('Withdrawals are only allowed between 10:00 AM and 6:00 PM WAT');
-      return;
-    }
-
-    // Day restriction
-    if (withdrawalAmount >= 3000 && withdrawalAmount <= 50000) {
-      if (lagosDay !== 'Tuesday') {
-        toast.error('Withdrawals between ₦3,000 and ₦50,000 are only allowed on Tuesdays');
-        return;
-      }
-    } else if (withdrawalAmount > 50000) {
-      if (lagosDay !== 'Thursday') {
-        toast.error('Withdrawals above ₦50,000 are only allowed on Thursdays');
-        return;
-      }
     }
 
     try {
@@ -110,6 +117,41 @@ const Withdraw: React.FC = () => {
           </div>
 
           <form onSubmit={handleWithdraw} className="space-y-4">
+            {isDevelopment && (
+              <div className="p-3 rounded-lg bg-purple-primary/10 border border-purple-primary/20 flex items-center gap-2 mb-2">
+                <AlertCircle size={14} className="text-purple-soft" />
+                <p className="text-[10px] font-black uppercase text-purple-soft tracking-widest">Dev Mode: Schedule Bypass Active</p>
+              </div>
+            )}
+
+            {!isDevelopment && (
+              <div className="space-y-2 mb-2">
+                <div className={`p-3 rounded-lg border flex items-start gap-3 transition-colors ${isTimeValid ? 'bg-success/5 border-success/10' : 'bg-danger/5 border-danger/10'}`}>
+                  <Clock size={16} className={isTimeValid ? 'text-success' : 'text-danger'} />
+                  <div className="space-y-1">
+                    <p className={`text-[10px] font-black uppercase tracking-widest ${isTimeValid ? 'text-success' : 'text-danger'}`}>
+                      Withdrawal Window
+                    </p>
+                    <p className="text-[11px] text-text-muted leading-tight">
+                      Withdrawals are available daily between <span className="text-white font-bold">10:00 AM and 6:00 PM (WAT)</span>.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-lg border border-white/[0.05] bg-white/[0.02] flex items-start gap-3">
+                  <Calendar size={16} className="text-purple-soft" />
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-purple-soft">
+                      Processing Schedule
+                    </p>
+                    <div className="text-[11px] text-text-muted leading-relaxed">
+                      <p>• ₦3,000 – ₦50,000: <span className="text-white font-bold">Tuesdays</span></p>
+                      <p>• ₦50,001 and above: <span className="text-white font-bold">Thursdays</span></p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
             <Input
               label="Withdrawal Amount"
               type="number"
@@ -144,12 +186,20 @@ const Withdraw: React.FC = () => {
               required
             />
 
+            {eligibilityError && !isDevelopment && (
+              <div className="p-4 rounded-xl bg-danger/5 border border-danger/10 flex items-start gap-3 mt-2">
+                <AlertCircle size={16} className="text-danger shrink-0 mt-0.5" />
+                <p className="text-[11px] font-bold text-danger leading-tight">{eligibilityError}</p>
+              </div>
+            )}
+
             <div className="pt-2">
               <Button
                 type="submit"
                 variant="primary"
                 className="w-full h-14 font-black uppercase text-xs tracking-widest"
                 loading={isLoading}
+                disabled={isSubmitDisabled}
               >
                 Confirm Withdrawal
               </Button>
