@@ -35,6 +35,44 @@ export const register = async (req: AuthRequest, res: Response) => {
   }
 };
 
+export const updateProfile = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) throw new Error('Unauthorized');
+
+    const user = await authService.updateProfile(userId, req.body);
+    res.status(200).json({
+      status: 'success',
+      data: {
+        user: formatUserResponse(user),
+      },
+    });
+  } catch (error: any) {
+    res.status(400).json({
+      status: 'error',
+      message: error.message || 'Update profile failed',
+    });
+  }
+};
+
+export const changePassword = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) throw new Error('Unauthorized');
+
+    await authService.changePassword(userId, req.body);
+    res.status(200).json({
+      status: 'success',
+      message: 'Password changed successfully',
+    });
+  } catch (error: any) {
+    res.status(400).json({
+      status: 'error',
+      message: error.message || 'Change password failed',
+    });
+  }
+};
+
 export const login = async (req: AuthRequest, res: Response) => {
   try {
     const { user, token } = await authService.login(req.body);

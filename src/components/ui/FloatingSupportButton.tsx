@@ -5,7 +5,7 @@ import { MessageCircle } from 'lucide-react';
 const FloatingSupportButton: React.FC = () => {
   return (
     <motion.a
-      href="https://wa.me"
+      href="https://wa.me/2348081670463"
       target="_blank"
       rel="noopener noreferrer"
       whileHover={{ scale: 1.1, y: -2 }}

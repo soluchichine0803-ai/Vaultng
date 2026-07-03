@@ -39,6 +39,13 @@ export const useAuthStore = create<AuthState>()(
             isLoading: false,
           });
           localStorage.setItem('auth_token', response.token);
+
+          // Request browser notification permission after successful login
+          if ('Notification' in window && Notification.permission === 'default') {
+            setTimeout(() => {
+              Notification.requestPermission();
+            }, 2000); // Small delay for better UX
+          }
         } catch (error: any) {
           let message = 'Login failed';
 

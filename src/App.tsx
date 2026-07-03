@@ -13,6 +13,9 @@ import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import ReferralRedirect from './pages/ReferralRedirect';
+import Notifications from './pages/Notifications';
+import Profile from './pages/Profile';
+import Settings from './pages/Settings';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import GuestRoute from './components/auth/GuestRoute';
 
@@ -59,7 +62,9 @@ function App() {
           <Route path="withdraw" element={<Withdraw />} />
           <Route path="referrals" element={<Referrals />} />
           <Route path="portfolio" element={<Portfolio />} />
-          {/* Add Profile route when ready */}
+          <Route path="notifications" element={<Notifications />} />
+          <Route path="profile" element={<Profile />} />
+          <Route path="settings" element={<Settings />} />
         </Route>
 
         {/* Fallback */}

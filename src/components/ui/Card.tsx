@@ -6,6 +6,7 @@ interface CardProps {
   hoverable?: boolean;
   className?: string;
   children: React.ReactNode;
+  onClick?: () => void;
 }
 
 const Card: React.FC<CardProps> = ({
@@ -13,6 +14,7 @@ const Card: React.FC<CardProps> = ({
   hoverable = false,
   className = '',
   children,
+  onClick,
 }) => {
   const baseStyles = 'rounded-xl overflow-hidden border';
 
@@ -26,6 +28,7 @@ const Card: React.FC<CardProps> = ({
 
   return (
     <motion.div
+      onClick={onClick}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={hoverable ? {

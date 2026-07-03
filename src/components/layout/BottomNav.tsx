@@ -5,7 +5,7 @@ import {
   TrendingUp,
   ArrowUpCircle,
   ArrowDownCircle,
-  Users
+  User
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -15,7 +15,7 @@ const BottomNav: React.FC = () => {
     { label: 'Invest', icon: <TrendingUp size={22} />, path: '/invest' },
     { label: 'Deposit', icon: <ArrowUpCircle size={22} />, path: '/deposit' },
     { label: 'Withdraw', icon: <ArrowDownCircle size={22} />, path: '/withdraw' },
-    { label: 'Referrals', icon: <Users size={22} />, path: '/referrals' },
+    { label: 'Profile', icon: <User size={22} />, path: '/profile' },
   ];
 
   return (
