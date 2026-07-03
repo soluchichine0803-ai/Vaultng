@@ -24,7 +24,7 @@ const Settings: React.FC = () => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  const SUPPORT_NUMBER = '2348000000000'; // Placeholder to be replaced later
+  const SUPPORT_NUMBER = '2348081670463';
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
