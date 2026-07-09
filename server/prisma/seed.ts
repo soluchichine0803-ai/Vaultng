@@ -26,12 +26,7 @@ async function main() {
   console.log('Admin user created/verified');
 
   // 2. Investment Plans
-  // Deactivate all existing plans first
-  await prisma.investmentPlan.updateMany({
-    data: { active: false },
-  });
-
-  const plans = [
+  const supportedPlans = [
     {
       id: 'plan-package-a',
       name: 'Package A',
@@ -52,7 +47,32 @@ async function main() {
     },
   ];
 
-  for (const plan of plans) {
+  const supportedPlanIds = supportedPlans.map(p => p.id);
+
+  // Identify and handle legacy plans
+  const existingPlans = await prisma.investmentPlan.findMany({
+    include: { _count: { select: { investments: true } } }
+  });
+
+  for (const existingPlan of existingPlans) {
+    if (!supportedPlanIds.includes(existingPlan.id)) {
+      if (existingPlan._count.investments === 0) {
+        // Safe to delete if no investments
+        await prisma.investmentPlan.delete({ where: { id: existingPlan.id } });
+        console.log(`Deleted legacy plan: ${existingPlan.name}`);
+      } else {
+        // Deactivate if investments exist
+        await prisma.investmentPlan.update({
+          where: { id: existingPlan.id },
+          data: { active: false }
+        });
+        console.log(`Deactivated legacy plan (preserved for history): ${existingPlan.name}`);
+      }
+    }
+  }
+
+  // Upsert supported plans
+  for (const plan of supportedPlans) {
     await prisma.investmentPlan.upsert({
       where: { id: plan.id },
       update: {
@@ -76,45 +96,44 @@ async function main() {
       },
     });
   }
-  console.log('Investment plans created/verified');
+  console.log('Investment plans synced');
 
-  // 3. System Settings
-  await prisma.systemSettings.upsert({
-    where: { id: 1 },
-    update: {},
-    create: {
-      id: 1,
-      withdrawalWindow: WithdrawalWindow.DAILY,
-      withdrawalFreeze: false,
-      maintenanceMode: false,
-      commissionRate: 10,
-      minWithdrawal: 1000,
-      maxWithdrawal: 1000000,
-    },
-  });
-  console.log('System settings created/verified');
-
-  // 4. Sample Banners
-  const banners = [
-    { message: 'Welcome to our investment platform! Start earning today.', type: BannerType.INFO },
-    { message: 'Maintenance scheduled for Sunday at 2 PM UTC.', type: BannerType.WARNING },
-  ];
-
-  for (const banner of banners) {
-    await prisma.banner.upsert({
-      where: { id: `banner-${banner.type.toLowerCase()}` },
-      update: {
-        message: banner.message,
-        type: banner.type,
-      },
-      create: {
-        id: `banner-${banner.type.toLowerCase()}`,
-        message: banner.message,
-        type: banner.type,
+  // 3. System Settings - Only create if none exist
+  const existingSettings = await prisma.systemSettings.findFirst();
+  if (!existingSettings) {
+    await prisma.systemSettings.create({
+      data: {
+        id: 1,
+        withdrawalWindow: WithdrawalWindow.DAILY,
+        withdrawalFreeze: false,
+        maintenanceMode: false,
+        commissionRate: 10,
+        minWithdrawal: 1000,
+        maxWithdrawal: 1000000,
       },
     });
+    console.log('Default system settings created');
+  } else {
+    console.log('System settings already exist, skipping');
   }
-  console.log('Sample banners created');
+
+  // 4. Sample Banners - Only create if none exist
+  const bannerCount = await prisma.banner.count();
+  if (bannerCount === 0) {
+    const banners = [
+      { id: 'banner-info', message: 'Welcome to our investment platform! Start earning today.', type: BannerType.INFO },
+      { id: 'banner-warning', message: 'Maintenance scheduled for Sunday at 2 PM UTC.', type: BannerType.WARNING },
+    ];
+
+    for (const banner of banners) {
+      await prisma.banner.create({
+        data: banner,
+      });
+    }
+    console.log('Sample banners created');
+  } else {
+    console.log('Banners already exist, skipping');
+  }
 
   console.log('Seeding completed successfully.');
 }
