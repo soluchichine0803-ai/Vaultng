@@ -6,8 +6,6 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "build:server": "cd server && npm install && npx prisma generate && npm run build",
-    "deploy": "npm install && npm run build && npm run build:server && cd server && npx prisma migrate deploy && npx prisma db seed",
     "lint": "eslint .",
     "preview": "vite preview"
   },
