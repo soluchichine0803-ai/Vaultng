@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "npm run --prefix server deploy",
+    "start": "npm run --prefix server start"
   },
   "dependencies": {
     "axios": "^1.16.1",
