@@ -7,7 +7,6 @@ const router = Router();
 // All withdrawal routes require authentication
 router.use(authenticate);
 
-router.get('/config', WithdrawalController.getConfig);
 router.get('/banks', WithdrawalController.getBanks);
 router.post('/resolve', WithdrawalController.resolveAccount);
 router.post('/', WithdrawalController.create);

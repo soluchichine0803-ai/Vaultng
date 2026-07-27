@@ -1,11 +1,6 @@
 import api from '../lib/api';
 
 export const withdrawalService = {
-  getWithdrawalConfig: async () => {
-    const response = await api.get('/withdrawals/config');
-    return response.data.data;
-  },
-
   getBanks: async () => {
     const response = await api.get('/withdrawals/banks');
     return response.data.data;
