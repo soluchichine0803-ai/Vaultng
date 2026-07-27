@@ -141,7 +141,7 @@ export class PaymentController {
         });
 
         if (withdrawal && withdrawal.status === WithdrawalStatus.PENDING) {
-          // Refund user's wallet and update withdrawal record status to REJECTED
+          // Refund user's wallet and update withdrawal record status to FAILED
           await prisma.$transaction(async (tx) => {
             await walletService.credit(
               withdrawal.userId,
@@ -155,7 +155,7 @@ export class PaymentController {
             await tx.withdrawal.update({
               where: { id: withdrawal.id },
               data: {
-                status: WithdrawalStatus.REJECTED,
+                status: WithdrawalStatus.FAILED,
                 rejectionReason: reason
               }
             });

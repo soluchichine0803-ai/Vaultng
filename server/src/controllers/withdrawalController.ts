@@ -4,27 +4,6 @@ import { AuthRequest } from '../types/auth';
 
 export class WithdrawalController {
   /**
-   * GET /api/withdrawals/config
-   */
-  static async getConfig(req: Request, res: Response) {
-    try {
-      const bypassActive = process.env.DEV_BYPASS_WITHDRAWAL_SCHEDULE === 'true';
-      return res.json({
-        status: 'success',
-        data: {
-          bypassActive
-        }
-      });
-    } catch (error: any) {
-      console.error('Error fetching withdrawal config:', error);
-      return res.status(500).json({
-        status: 'error',
-        message: error.message || 'Internal server error'
-      });
-    }
-  }
-
-  /**
    * GET /api/withdrawals/banks
    */
   static async getBanks(req: Request, res: Response) {

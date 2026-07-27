@@ -28,9 +28,6 @@ const Withdraw: React.FC = () => {
   const [withdrawals, setWithdrawals] = useState<any[]>([]);
   const [isHistoryLoading, setIsHistoryLoading] = useState(true);
 
-  const [bypassActive, setBypassActive] = useState(false);
-  const [isConfigLoading, setIsConfigLoading] = useState(true);
-
   const withdrawalAmount = Number(amount);
 
   // 1. Fetch History
@@ -46,19 +43,9 @@ const Withdraw: React.FC = () => {
     }
   };
 
-  // 2. Fetch Withdrawal Configuration & Bank List
+  // 2. Fetch Bank List
   useEffect(() => {
-    const fetchConfigAndBanks = async () => {
-      try {
-        setIsConfigLoading(true);
-        const config = await withdrawalService.getWithdrawalConfig();
-        setBypassActive(config.bypassActive);
-      } catch (err) {
-        console.error('Failed to fetch withdrawal config', err);
-      } finally {
-        setIsConfigLoading(false);
-      }
-
+    const fetchBanks = async () => {
       try {
         const banksList = await withdrawalService.getBanks();
         setBanks(banksList);
@@ -67,7 +54,7 @@ const Withdraw: React.FC = () => {
       }
     };
 
-    fetchConfigAndBanks();
+    fetchBanks();
     fetchHistory();
   }, []);
 
@@ -116,21 +103,6 @@ const Withdraw: React.FC = () => {
 
   // Eligibility Checks
   const getEligibilityError = () => {
-    if (isConfigLoading) return null;
-
-    // Development bypass
-    if (bypassActive) {
-      if (amount) {
-        if (withdrawalAmount < 3000) {
-          return "Minimum withdrawal amount is ₦3,000.";
-        }
-        if (user && withdrawalAmount > Number(user.availableBalance)) {
-          return "Insufficient available balance.";
-        }
-      }
-      return null;
-    }
-
     if (!isTimeValid) {
       return "Withdrawals are available daily between 10:00 AM and 6:00 PM (Africa/Lagos).";
     }
@@ -174,7 +146,7 @@ const Withdraw: React.FC = () => {
       return;
     }
 
-    if (eligibilityError && !bypassActive) {
+    if (eligibilityError) {
       toast.error(eligibilityError);
       return;
     }
@@ -221,41 +193,32 @@ const Withdraw: React.FC = () => {
           </div>
 
           <form onSubmit={handleWithdraw} className="space-y-4">
-            {bypassActive && (
-              <div className="p-3 rounded-lg bg-purple-primary/10 border border-purple-primary/20 flex items-center gap-2 mb-2">
-                <AlertCircle size={14} className="text-purple-soft" />
-                <p className="text-[10px] font-black uppercase text-purple-soft tracking-widest">Dev Mode: Schedule Bypass Active</p>
-              </div>
-            )}
-
-            {!bypassActive && (
-              <div className="space-y-2 mb-2">
-                <div className={`p-3 rounded-lg border flex items-start gap-3 transition-colors ${isTimeValid ? 'bg-success/5 border-success/10' : 'bg-danger/5 border-danger/10'}`}>
-                  <Clock size={16} className={isTimeValid ? 'text-success' : 'text-danger'} />
-                  <div className="space-y-1">
-                    <p className={`text-[10px] font-black uppercase tracking-widest ${isTimeValid ? 'text-success' : 'text-danger'}`}>
-                      Withdrawal Window
-                    </p>
-                    <p className="text-[11px] text-text-muted leading-tight">
-                      Withdrawals are available daily between <span className="text-white font-bold">10:00 AM and 6:00 PM (WAT)</span>.
-                    </p>
-                  </div>
+            <div className="space-y-2 mb-2">
+              <div className={`p-3 rounded-lg border flex items-start gap-3 transition-colors ${isTimeValid ? 'bg-success/5 border-success/10' : 'bg-danger/5 border-danger/10'}`}>
+                <Clock size={16} className={isTimeValid ? 'text-success' : 'text-danger'} />
+                <div className="space-y-1">
+                  <p className={`text-[10px] font-black uppercase tracking-widest ${isTimeValid ? 'text-success' : 'text-danger'}`}>
+                    Withdrawal Window
+                  </p>
+                  <p className="text-[11px] text-text-muted leading-tight">
+                    Withdrawals are available daily between <span className="text-white font-bold">10:00 AM and 6:00 PM (WAT)</span>.
+                  </p>
                 </div>
+              </div>
 
-                <div className="p-3 rounded-lg border border-white/[0.05] bg-white/[0.02] flex items-start gap-3">
-                  <Calendar size={16} className="text-purple-soft" />
-                  <div className="space-y-1">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-purple-soft">
-                      Processing Schedule
-                    </p>
-                    <div className="text-[11px] text-text-muted leading-relaxed">
-                      <p>• ₦3,000 – ₦50,000: <span className="text-white font-bold">Tuesdays</span></p>
-                      <p>• ₦50,001 and above: <span className="text-white font-bold">Thursdays</span></p>
-                    </div>
+              <div className="p-3 rounded-lg border border-white/[0.05] bg-white/[0.02] flex items-start gap-3">
+                <Calendar size={16} className="text-purple-soft" />
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-purple-soft">
+                    Processing Schedule
+                  </p>
+                  <div className="text-[11px] text-text-muted leading-relaxed">
+                    <p>• ₦3,000 – ₦50,000: <span className="text-white font-bold">Tuesdays</span></p>
+                    <p>• ₦50,001 and above: <span className="text-white font-bold">Thursdays</span></p>
                   </div>
                 </div>
               </div>
-            )}
+            </div>
             <Input
               label="Withdrawal Amount"
               type="number"
@@ -419,6 +382,7 @@ const Withdraw: React.FC = () => {
                         switch (status) {
                           case 'APPROVED': return <CheckCircle2 size={14} className="text-success" />;
                           case 'REJECTED': return <XCircle size={14} className="text-danger" />;
+                          case 'FAILED': return <XCircle size={14} className="text-danger" />;
                           case 'PENDING': return <Timer size={14} className="text-purple-soft" />;
                           default: return <History size={14} className="text-text-muted" />;
                         }
@@ -448,7 +412,7 @@ const Withdraw: React.FC = () => {
                               {getStatusIcon(w.status)}
                               <span className={`text-[10px] font-black uppercase tracking-widest ${
                                 w.status === 'APPROVED' ? 'text-success' :
-                                w.status === 'REJECTED' ? 'text-danger' :
+                                  w.status === 'REJECTED' || w.status === 'FAILED' ? 'text-danger' :
                                 'text-purple-soft'
                               }`}>
                                 {w.status}

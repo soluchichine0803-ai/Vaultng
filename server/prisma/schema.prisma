@@ -26,12 +26,14 @@ enum DepositStatus {
   PENDING
   APPROVED
   REJECTED
+  FAILED
 }
 
 enum WithdrawalStatus {
   PENDING
   APPROVED
   REJECTED
+  FAILED
 }
 
 enum BannerType {

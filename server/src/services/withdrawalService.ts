@@ -9,6 +9,7 @@ interface CachedBanks {
 
 let banksCache: CachedBanks | null = null;
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+const LARGE_WITHDRAWAL_THRESHOLD = 100000;
 
 export class WithdrawalService {
   /**
@@ -167,61 +168,48 @@ export class WithdrawalService {
       throw new Error('Withdrawal amount must be greater than zero');
     }
 
-    // 2. Validate Time & Days (with development mode bypass support)
-    const bypassActive = process.env.DEV_BYPASS_WITHDRAWAL_SCHEDULE === 'true';
+    // 2. Validate Time & Days (Enforced Schedule)
     const now = new Date();
     const serverTime = now.toISOString();
 
     console.log(`[WithdrawalService] DIAGNOSTIC: Current Environment = '${process.env.NODE_ENV}'`);
-    console.log(`[WithdrawalService] DIAGNOSTIC: Development Bypass Flag (DEV_BYPASS_WITHDRAWAL_SCHEDULE) = ${bypassActive}`);
     console.log(`[WithdrawalService] DIAGNOSTIC: Current Server Time = ${serverTime}`);
     console.log(`[WithdrawalService] DIAGNOSTIC: Amount = ₦${amount}`);
 
-    if (bypassActive) {
-      console.log('[WithdrawalService] DIAGNOSTIC: Schedule validation is SKIPPED (Bypass Active)');
-      // In bypass mode, we must still enforce the minimum withdrawal amount of ₦3,000
-      if (amount < 3000) {
-        const rejectReason = `Amount ₦${amount} is less than minimum ₦3,000`;
+    const lagosHourStr = new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Africa/Lagos',
+      hour: 'numeric',
+      hour12: false,
+    }).format(now);
+    const currentHour = parseInt(lagosHourStr, 10);
+
+    if (currentHour < 10 || currentHour >= 18) {
+      const rejectReason = `Current Lagos Hour (${currentHour}) is outside the allowed window (10:00 AM - 6:00 PM WAT)`;
+      console.log(`[WithdrawalService] DIAGNOSTIC: Rejected because: ${rejectReason}`);
+      throw new Error('Withdrawals are only allowed between 10:00 AM and 6:00 PM WAT');
+    }
+
+    const dayOfWeek = new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Africa/Lagos',
+      weekday: 'long',
+    }).format(now);
+
+    if (amount >= 3000 && amount <= 50000) {
+      if (dayOfWeek !== 'Tuesday') {
+        const rejectReason = `Lagos Day (${dayOfWeek}) is not Tuesday for amount ₦${amount}`;
         console.log(`[WithdrawalService] DIAGNOSTIC: Rejected because: ${rejectReason}`);
-        throw new Error('Minimum withdrawal amount is ₦3,000');
+        throw new Error('Withdrawals between ₦3,000 and ₦50,000 are only allowed on Tuesdays');
+      }
+    } else if (amount > 50000) {
+      if (dayOfWeek !== 'Thursday') {
+        const rejectReason = `Lagos Day (${dayOfWeek}) is not Thursday for amount ₦${amount}`;
+        console.log(`[WithdrawalService] DIAGNOSTIC: Rejected because: ${rejectReason}`);
+        throw new Error('Withdrawals above ₦50,000 are only allowed on Thursdays');
       }
     } else {
-      console.log('[WithdrawalService] DIAGNOSTIC: Schedule validation is ENFORCED (Bypass Inactive)');
-      const lagosHourStr = new Intl.DateTimeFormat('en-GB', {
-        timeZone: 'Africa/Lagos',
-        hour: 'numeric',
-        hour12: false,
-      }).format(now);
-      const currentHour = parseInt(lagosHourStr, 10);
-
-      if (currentHour < 10 || currentHour >= 18) {
-        const rejectReason = `Current Lagos Hour (${currentHour}) is outside the allowed window (10:00 AM - 6:00 PM WAT)`;
-        console.log(`[WithdrawalService] DIAGNOSTIC: Rejected because: ${rejectReason}`);
-        throw new Error('Withdrawals are only allowed between 10:00 AM and 6:00 PM WAT');
-      }
-
-      const dayOfWeek = new Intl.DateTimeFormat('en-GB', {
-        timeZone: 'Africa/Lagos',
-        weekday: 'long',
-      }).format(now);
-
-      if (amount >= 3000 && amount <= 50000) {
-        if (dayOfWeek !== 'Tuesday') {
-          const rejectReason = `Lagos Day (${dayOfWeek}) is not Tuesday for amount ₦${amount}`;
-          console.log(`[WithdrawalService] DIAGNOSTIC: Rejected because: ${rejectReason}`);
-          throw new Error('Withdrawals between ₦3,000 and ₦50,000 are only allowed on Tuesdays');
-        }
-      } else if (amount > 50000) {
-        if (dayOfWeek !== 'Thursday') {
-          const rejectReason = `Lagos Day (${dayOfWeek}) is not Thursday for amount ₦${amount}`;
-          console.log(`[WithdrawalService] DIAGNOSTIC: Rejected because: ${rejectReason}`);
-          throw new Error('Withdrawals above ₦50,000 are only allowed on Thursdays');
-        }
-      } else {
-         const rejectReason = `Amount ₦${amount} is less than minimum ₦3,000`;
-         console.log(`[WithdrawalService] DIAGNOSTIC: Rejected because: ${rejectReason}`);
-         throw new Error('Minimum withdrawal amount is ₦3,000');
-      }
+       const rejectReason = `Amount ₦${amount} is less than minimum ₦3,000`;
+       console.log(`[WithdrawalService] DIAGNOSTIC: Rejected because: ${rejectReason}`);
+       throw new Error('Minimum withdrawal amount is ₦3,000');
     }
 
     // 3. Resolve the bank name from bank code
@@ -271,7 +259,7 @@ export class WithdrawalService {
         }
 
         // Create withdrawal record with PENDING status
-        const isLargeWithdrawal = amount > 100000;
+        const isLargeWithdrawal = amount > LARGE_WITHDRAWAL_THRESHOLD;
         const withdrawal = await tx.withdrawal.create({
           data: {
             userId,
@@ -293,27 +281,84 @@ export class WithdrawalService {
       throw dbError;
     }
 
-    // 8. Initiate the Paystack Transfer
+    // 8. Initiate the Paystack Transfer and process immediate responses
     try {
       console.log(`[WithdrawalService] Initiating transfer for withdrawal ID ${withdrawalRecord.id}...`);
       const transfer = await this.initiateTransfer(amount, recipientCode, uniqueRef);
       const transferCode = transfer.transfer_code;
+      const immediateStatus = transfer.status ? transfer.status.toLowerCase() : 'pending';
 
-      // Update the withdrawal record with the transfer code and final status if known immediately
+      let finalStatus: WithdrawalStatus = WithdrawalStatus.PENDING;
+      let rejectionReason: string | null = null;
+
+      if (immediateStatus === 'success') {
+        finalStatus = WithdrawalStatus.APPROVED;
+
+        // Send notification
+        await prisma.notification.create({
+          data: {
+            userId,
+            title: 'Withdrawal Successful',
+            message: `Your withdrawal of ₦${amount.toLocaleString()} to ${bankName} has been processed successfully.`,
+          }
+        });
+      } else if (immediateStatus === 'failed' || immediateStatus === 'reversed') {
+        finalStatus = WithdrawalStatus.FAILED;
+        rejectionReason = `Immediate Paystack transfer failed: ${transfer.failures?.message || transfer.failure_reason || 'Unknown failure'}`;
+
+        // Refund wallet
+        await prisma.$transaction(async (tx) => {
+          await walletService.credit(
+            userId,
+            amount,
+            TransactionType.ADJUSTMENT,
+            `Refund: Failed withdrawal to ${bankName} (${accountNumber})`,
+            uniqueRef,
+            tx
+          );
+
+          await tx.withdrawal.update({
+            where: { id: withdrawalRecord.id },
+            data: {
+              status: WithdrawalStatus.FAILED,
+              rejectionReason,
+              transferCode,
+            },
+          });
+        });
+
+        // Send notification
+        await prisma.notification.create({
+          data: {
+            userId,
+            title: 'Withdrawal Failed',
+            message: `Your withdrawal of ₦${amount.toLocaleString()} to ${bankName} failed and has been refunded to your available balance.`,
+          }
+        });
+
+        throw new Error(`Withdrawal failed immediately: ${rejectionReason}`);
+      }
+
+      // Update withdrawal record with the transfer code and the determined final status
       const updatedWithdrawal = await prisma.withdrawal.update({
         where: { id: withdrawalRecord.id },
         data: {
           transferCode,
+          status: finalStatus,
+          rejectionReason,
         },
       });
 
       return updatedWithdrawal;
     } catch (paystackError: any) {
+      // If it is an immediate failure that already threw above, we don't need to roll back again.
+      if (paystackError.message && paystackError.message.includes('Withdrawal failed immediately:')) {
+        throw paystackError;
+      }
+
       console.error('[WithdrawalService] Paystack transfer initiation failed. Rolling back...', paystackError);
 
-      // If Paystack fails, we must:
-      // 1. Roll back the database changes (refund the user's wallet)
-      // 2. Mark the withdrawal record status as REJECTED in the database so the user has a trace of the failure.
+      // Rollback wallet balance and mark withdrawal as FAILED (technical failure)
       try {
         await prisma.$transaction(async (tx) => {
           // Refund the wallet
@@ -326,11 +371,11 @@ export class WithdrawalService {
             tx
           );
 
-          // Update withdrawal status to REJECTED
+          // Update withdrawal status to FAILED
           await tx.withdrawal.update({
             where: { id: withdrawalRecord.id },
             data: {
-              status: WithdrawalStatus.REJECTED,
+              status: WithdrawalStatus.FAILED,
               rejectionReason: `Paystack Transfer Failed: ${paystackError.message || 'Unknown error'}`,
             },
           });
