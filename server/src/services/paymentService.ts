@@ -174,58 +174,85 @@ export class PaymentService {
    * them to either SUCCESS (if paid) or REJECTED with rejectionReason EXPIRED.
    */
   static async cleanupStaleDeposits() {
+    const jobStartTime = new Date();
+    console.log(`[StaleCleanupJob] Cycle started at ${jobStartTime.toISOString()}`);
+
     try {
       const timeoutMinutes = 30;
       const thresholdTime = new Date(Date.now() - timeoutMinutes * 60 * 1000);
 
-      // Find all PENDING deposits with method PAYSTACK created before thresholdTime
-      const staleDeposits = await prisma.deposit.findMany({
+      // Find ALL pending deposits to be thorough and provide detailed logging of why any are skipped
+      const allPendingDeposits = await prisma.deposit.findMany({
         where: {
           status: DepositStatus.PENDING,
-          method: 'PAYSTACK',
-          createdAt: {
-            lt: thresholdTime,
-          },
         },
       });
 
-      if (staleDeposits.length === 0) {
+      console.log(`[StaleCleanupJob] Found ${allPendingDeposits.length} total pending deposits in database.`);
+
+      if (allPendingDeposits.length === 0) {
+        console.log(`[StaleCleanupJob] No pending deposits found. Cycle finished.`);
         return;
       }
 
-      console.log(`[PaymentService] Found ${staleDeposits.length} stale pending deposits for cleanup.`);
+      let eligibleCount = 0;
+      for (const deposit of allPendingDeposits) {
+        const ageInMinutes = (Date.now() - new Date(deposit.createdAt).getTime()) / (60 * 1000);
 
-      for (const deposit of staleDeposits) {
+        // Skip if not PAYSTACK
+        if (deposit.method !== 'PAYSTACK') {
+          console.log(`[StaleCleanupJob] Skipped deposit ref=${deposit.reference}: Method is '${deposit.method}', expected 'PAYSTACK'.`);
+          continue;
+        }
+
+        // Skip if recent (age <= 30 minutes)
+        if (ageInMinutes < timeoutMinutes) {
+          const remainingMinutes = (timeoutMinutes - ageInMinutes).toFixed(1);
+          console.log(`[StaleCleanupJob] Skipped deposit ref=${deposit.reference}: Too recent (Age: ${ageInMinutes.toFixed(1)} mins, requires ${timeoutMinutes} mins. Expires in ${remainingMinutes} mins).`);
+          continue;
+        }
+
+        eligibleCount++;
+        console.log(`[StaleCleanupJob] Processing eligible stale deposit: ref=${deposit.reference}, amount=₦${deposit.amount}, age=${ageInMinutes.toFixed(1)} mins`);
+
         try {
-          console.log(`[PaymentService] Verifying stale deposit ref=${deposit.reference} with Paystack before expiry...`);
-
           let paystackData: any = null;
           let isDefinitivelyNotFound = false;
 
           try {
             paystackData = await this.verifyTransaction(deposit.reference);
           } catch (verifyError: any) {
-            // If Paystack returns a definitive 404 (or the message indicates transaction not found), we treat it as definitively unpaid
-            if (verifyError.status === 404 || verifyError.message?.toLowerCase().includes('transaction not found')) {
-              console.log(`[PaymentService] Paystack verified transaction does not exist for ref=${deposit.reference}`);
-              isDefinitivelyNotFound = true;
-            } else {
-              // This is a transient error (e.g. rate limit, connection timeout, server 500 error, etc.)
-              // Skip expiring this deposit on this run to allow subsequent retries.
-              console.warn(`[PaymentService] Skipping stale deposit ref=${deposit.reference} due to transient verification error:`, verifyError.message);
+            const errStatus = verifyError.status;
+            const errMsg = verifyError.message || '';
+
+            // Check if this error is transient
+            const isTransient =
+              errStatus === 429 ||
+              errStatus >= 500 ||
+              verifyError.code === 'ECONNRESET' ||
+              verifyError.code === 'ETIMEDOUT' ||
+              verifyError.code === 'ENOTFOUND' ||
+              errMsg.toLowerCase().includes('timeout') ||
+              errMsg.toLowerCase().includes('fetch failed') ||
+              errMsg.toLowerCase().includes('network');
+
+            if (isTransient) {
+              console.warn(`[StaleCleanupJob] Skipped deposit ref=${deposit.reference} due to transient Paystack verification error (Status: ${errStatus}, Error: ${errMsg}). Will retry next cycle.`);
               continue;
+            } else {
+              console.log(`[StaleCleanupJob] Non-transient verification error for ref=${deposit.reference} (Status: ${errStatus}, Error: ${errMsg}). Proceeding to expire.`);
+              isDefinitivelyNotFound = true;
             }
           }
 
           if (paystackData && paystackData.status === 'success') {
-            // Payment actually succeeded, process credit
-            console.log(`[PaymentService] Stale deposit ref=${deposit.reference} was paid! Processing credit...`);
+            console.log(`[StaleCleanupJob] Deposit ref=${deposit.reference} was found SUCCESSFUL on Paystack! Crediting user wallet...`);
             await this.processDepositSuccess(deposit.reference, paystackData);
-          } else if (paystackData || isDefinitivelyNotFound) {
-            // We have a definitive response from Paystack (e.g., status is 'abandoned' or 'failed', or 404 not found)
-            // Mark as REJECTED with rejectionReason 'EXPIRED' only if it's still in the PENDING state (prevents concurrent race conditions)
-            console.log(`[PaymentService] Expiring stale pending deposit ref=${deposit.reference}`);
-            await prisma.deposit.updateMany({
+          } else {
+            const pStatus = paystackData ? paystackData.status : 'not_found_on_paystack';
+            console.log(`[StaleCleanupJob] Expiring stale pending deposit ref=${deposit.reference}. Paystack status: '${pStatus}'`);
+
+            const updateResult = await prisma.deposit.updateMany({
               where: {
                 id: deposit.id,
                 status: DepositStatus.PENDING,
@@ -235,13 +262,21 @@ export class PaymentService {
                 rejectionReason: 'EXPIRED',
               },
             });
+
+            if (updateResult.count > 0) {
+              console.log(`[StaleCleanupJob] Successfully expired deposit ref=${deposit.reference}.`);
+            } else {
+              console.log(`[StaleCleanupJob] Skipped expiring deposit ref=${deposit.reference}: Already approved/processed concurrently.`);
+            }
           }
         } catch (singleErr: any) {
-          console.error(`[PaymentService] Error cleaning up stale deposit ${deposit.reference}:`, singleErr);
+          console.error(`[StaleCleanupJob] Error processing deposit ${deposit.reference}:`, singleErr);
         }
       }
+
+      console.log(`[StaleCleanupJob] Cycle finished. Processed ${eligibleCount} stale eligible deposits.`);
     } catch (error: any) {
-      console.error('[PaymentService] Error running stale deposits cleanup:', error);
+      console.error('[StaleCleanupJob] Critical error in cleanup cycle:', error);
     }
   }
 }

@@ -12,6 +12,9 @@ import paymentRoutes from './routes/paymentRoutes';
 
 dotenv.config();
 
+// Ensure process.env.NODE_ENV defaults to development if not explicitly specified
+process.env.NODE_ENV = process.env.NODE_ENV || 'development';
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
