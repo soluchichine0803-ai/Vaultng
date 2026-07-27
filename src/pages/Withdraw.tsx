@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { pageTransition } from '../lib/animations';
 import Card from '../components/ui/Card';
 import Input from '../components/ui/Input';
@@ -8,12 +8,13 @@ import Badge from '../components/ui/Badge';
 import { useAuthStore } from '../store/authStore';
 import { withdrawalService } from '../services/withdrawalService';
 import { toast } from 'react-hot-toast';
-import { AlertCircle, Clock, Calendar, History, CheckCircle2, XCircle, Timer } from 'lucide-react';
+import { AlertCircle, Clock, Calendar, History, CheckCircle2, XCircle, Timer, Search, ChevronDown, Check, Loader2 } from 'lucide-react';
 import { formatCurrency } from '../utils/formatters';
 
 const Withdraw: React.FC = () => {
   const { user, fetchUser } = useAuthStore();
   const [amount, setAmount] = useState('');
+  const [bankCode, setBankCode] = useState('');
   const [bankName, setBankName] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
   const [accountName, setAccountName] = useState('');
@@ -21,25 +22,96 @@ const Withdraw: React.FC = () => {
   const [withdrawals, setWithdrawals] = useState<any[]>([]);
   const [isHistoryLoading, setIsHistoryLoading] = useState(true);
 
+  // Bank & Resolution states
+  const [banks, setBanks] = useState<{ name: string; code: string }[]>([]);
+  const [isBanksLoading, setIsBanksLoading] = useState(true);
+  const [isResolving, setIsResolving] = useState(false);
+  const [isResolved, setIsResolved] = useState(false);
+  const [devBypassActive, setDevBypassActive] = useState(false);
+
+  // Custom Dropdown Search States
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
   const withdrawalAmount = Number(amount);
 
-  const fetchHistory = async () => {
+  // Fetch initial configuration, banks, and history
+  const initPage = async () => {
     try {
       setIsHistoryLoading(true);
-      const data = await withdrawalService.getMyWithdrawals();
-      setWithdrawals(data);
+      setIsBanksLoading(true);
+
+      const [historyData, configData, banksList] = await Promise.all([
+        withdrawalService.getMyWithdrawals(),
+        withdrawalService.getConfig().catch((e) => {
+          console.error('Failed to fetch config', e);
+          return { devBypassActive: false };
+        }),
+        withdrawalService.getBanks().catch((e) => {
+          console.error('Failed to fetch banks', e);
+          return [];
+        }),
+      ]);
+
+      setWithdrawals(historyData);
+      setDevBypassActive(configData.devBypassActive);
+      setBanks(banksList);
     } catch (error) {
-      console.error('Failed to fetch withdrawal history', error);
+      console.error('Failed to initialize page data', error);
     } finally {
       setIsHistoryLoading(false);
+      setIsBanksLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchHistory();
+    initPage();
   }, []);
 
-  // 1. Time and Day Calculation (WAT)
+  // Handle clicking outside custom dropdown to close it
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Handle automatic account name resolution
+  useEffect(() => {
+    if (!bankCode || accountNumber.length !== 10 || !/^\d+$/.test(accountNumber)) {
+      setIsResolved(false);
+      setAccountName('');
+      return;
+    }
+
+    const resolve = async () => {
+      try {
+        setIsResolving(true);
+        setIsResolved(false);
+        setAccountName('');
+        const res = await withdrawalService.resolveAccount(accountNumber, bankCode);
+        setAccountName(res.accountName);
+        setIsResolved(true);
+        toast.success('Account resolved successfully');
+      } catch (error: any) {
+        console.error('Account resolution failed:', error);
+        const msg = error.response?.data?.message || 'Could not resolve bank account details. Verify bank and account number.';
+        toast.error(msg);
+      } finally {
+        setIsResolving(false);
+      }
+    };
+
+    resolve();
+  }, [bankCode, accountNumber]);
+
+  // Time and Day Calculation (WAT)
   const now = new Date();
   const lagosFormatter = new Intl.DateTimeFormat('en-GB', {
     timeZone: 'Africa/Lagos',
@@ -53,12 +125,10 @@ const Withdraw: React.FC = () => {
   const lagosDay = parts.find(p => p.type === 'weekday')?.value || '';
 
   const isTimeValid = lagosHour >= 10 && lagosHour < 18;
-  const isDevelopment = import.meta.env.DEV;
 
   // Eligibility Checks
   const getEligibilityError = () => {
-    // Development bypass
-    if (isDevelopment) return null;
+    if (devBypassActive) return null;
 
     if (!isTimeValid) {
       return "Withdrawals are available daily between 10:00 AM and 6:00 PM (Africa/Lagos).";
@@ -86,18 +156,31 @@ const Withdraw: React.FC = () => {
   };
 
   const eligibilityError = getEligibilityError();
-  const isSubmitDisabled = !!eligibilityError || !amount || !bankName || !accountNumber || !accountName || isLoading;
+  const balanceError = user && amount && withdrawalAmount > Number(user.availableBalance) ? "Insufficient available balance." : null;
+  const devMinError = devBypassActive && amount && withdrawalAmount < 3000 ? "Minimum withdrawal amount is ₦3,000." : null;
+
+  const activeError = eligibilityError || balanceError || devMinError;
+
+  const isSubmitDisabled =
+    !!activeError ||
+    !amount ||
+    !bankCode ||
+    !accountNumber ||
+    !accountName ||
+    !isResolved ||
+    isLoading ||
+    isResolving;
 
   const handleWithdraw = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!amount || !bankName || !accountNumber || !accountName) {
-      toast.error('Please fill in all fields');
+    if (!amount || !bankCode || !accountNumber || !accountName) {
+      toast.error('Please fill in all fields and resolve account');
       return;
     }
 
-    if (eligibilityError && !isDevelopment) {
-      toast.error(eligibilityError);
+    if (activeError) {
+      toast.error(activeError);
       return;
     }
 
@@ -106,22 +189,31 @@ const Withdraw: React.FC = () => {
       await withdrawalService.createWithdrawal({
         amount: Number(amount),
         bankName,
+        bankCode,
         accountNumber,
         accountName,
       });
-      toast.success('Withdrawal request submitted successfully');
+      toast.success('Withdrawal request processed successfully');
       setAmount('');
+      setBankCode('');
       setBankName('');
       setAccountNumber('');
       setAccountName('');
+      setIsResolved(false);
+      setSearchQuery('');
       fetchUser();
-      fetchHistory();
+      const updatedHistory = await withdrawalService.getMyWithdrawals();
+      setWithdrawals(updatedHistory);
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to submit withdrawal request');
     } finally {
       setIsLoading(false);
     }
   };
+
+  const filteredBanks = banks.filter((b) =>
+    b.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <motion.div variants={pageTransition} initial="initial" animate="animate" exit="exit" className="space-y-6">
@@ -138,14 +230,14 @@ const Withdraw: React.FC = () => {
           </div>
 
           <form onSubmit={handleWithdraw} className="space-y-4">
-            {isDevelopment && (
+            {devBypassActive && (
               <div className="p-3 rounded-lg bg-purple-primary/10 border border-purple-primary/20 flex items-center gap-2 mb-2">
                 <AlertCircle size={14} className="text-purple-soft" />
                 <p className="text-[10px] font-black uppercase text-purple-soft tracking-widest">Dev Mode: Schedule Bypass Active</p>
               </div>
             )}
 
-            {!isDevelopment && (
+            {!devBypassActive && (
               <div className="space-y-2 mb-2">
                 <div className={`p-3 rounded-lg border flex items-start gap-3 transition-colors ${isTimeValid ? 'bg-success/5 border-success/10' : 'bg-danger/5 border-danger/10'}`}>
                   <Clock size={16} className={isTimeValid ? 'text-success' : 'text-danger'} />
@@ -173,6 +265,7 @@ const Withdraw: React.FC = () => {
                 </div>
               </div>
             )}
+
             <Input
               label="Withdrawal Amount"
               type="number"
@@ -180,37 +273,113 @@ const Withdraw: React.FC = () => {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               required
-              className="no-spinner"
+              className="no-spinner text-white"
             />
 
-            <Input
-              label="Bank Name"
-              placeholder="Enter bank name"
-              value={bankName}
-              onChange={(e) => setBankName(e.target.value)}
-              required
-            />
+            {/* Custom Searchable Bank Dropdown */}
+            <div className="space-y-1.5" ref={dropdownRef}>
+              <label className="block text-xs font-bold uppercase tracking-wider text-text-muted">Bank Name</label>
+              <div className="relative">
+                <button
+                  type="button"
+                  disabled={isBanksLoading}
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className="flex h-11 w-full items-center justify-between rounded-lg border border-white/[0.08] bg-white/[0.02] px-3.5 py-2 text-left text-xs font-medium text-white shadow-sm ring-offset-background placeholder:text-text-muted/40 focus:outline-none focus:ring-1 focus:ring-purple-primary/50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <span className={bankName ? 'text-white' : 'text-text-muted/50'}>
+                    {isBanksLoading ? 'Loading bank list...' : (bankName || 'Select bank')}
+                  </span>
+                  <ChevronDown className="h-4 w-4 text-text-muted/60" aria-hidden="true" />
+                </button>
+
+                <AnimatePresence>
+                  {isDropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute z-30 mt-1.5 max-h-56 w-full overflow-hidden rounded-lg border border-white/[0.08] bg-background-secondary shadow-lg ring-1 ring-black ring-opacity-5"
+                    >
+                      <div className="flex items-center border-b border-white/[0.08] px-3">
+                        <Search className="h-3.5 w-3.5 text-text-muted shrink-0" />
+                        <input
+                          type="text"
+                          placeholder="Search banks..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="h-10 w-full bg-transparent px-3 text-xs text-white placeholder-text-muted/40 outline-none"
+                        />
+                      </div>
+                      <div className="max-h-44 overflow-y-auto py-1 divide-y divide-white/[0.02]">
+                        {filteredBanks.length === 0 ? (
+                          <div className="px-4 py-3 text-center text-xs text-text-muted/60">No banks found</div>
+                        ) : (
+                          filteredBanks.map((bank) => (
+                            <button
+                              key={bank.code}
+                              type="button"
+                              onClick={() => {
+                                setBankCode(bank.code);
+                                setBankName(bank.name);
+                                setIsDropdownOpen(false);
+                                setSearchQuery('');
+                              }}
+                              className="flex w-full items-center justify-between px-3.5 py-2.5 text-left text-xs text-gray-300 hover:bg-purple-primary/10 hover:text-white transition-colors"
+                            >
+                              <span>{bank.name}</span>
+                              {bankCode === bank.code && <Check className="h-3.5 w-3.5 text-purple-soft" />}
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
 
             <Input
               label="Account Number"
-              placeholder="Enter account number"
+              placeholder="Enter 10-digit account number"
               value={accountNumber}
-              onChange={(e) => setAccountNumber(e.target.value)}
+              maxLength={10}
+              onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, ''))}
               required
+              className="text-white"
             />
 
-            <Input
-              label="Account Name"
-              placeholder="Enter account name"
-              value={accountName}
-              onChange={(e) => setAccountName(e.target.value)}
-              required
-            />
+            <div className="space-y-1">
+              <div className="relative">
+                <Input
+                  label="Account Name"
+                  placeholder={isResolving ? 'Resolving account details...' : 'Resolved account holder name'}
+                  value={accountName}
+                  required
+                  readOnly
+                  disabled
+                  className="bg-white/[0.01] border-white/[0.05] text-white opacity-80 cursor-not-allowed select-none font-bold"
+                />
+                {isResolving && (
+                  <div className="absolute right-3.5 bottom-3.5">
+                    <Loader2 className="w-4 h-4 text-purple-primary animate-spin" />
+                  </div>
+                )}
+                {isResolved && !isResolving && (
+                  <div className="absolute right-3.5 bottom-3.5">
+                    <CheckCircle2 className="w-4 h-4 text-success" />
+                  </div>
+                )}
+              </div>
+              {isResolving && (
+                <p className="text-[10px] text-purple-soft/80 font-black tracking-widest animate-pulse">VERIFYING ACCOUNT VIA PAYSTACK SECURE GATEWAY...</p>
+              )}
+            </div>
 
-            {eligibilityError && !isDevelopment && (
+            {activeError && (
               <div className="p-4 rounded-xl bg-danger/5 border border-danger/10 flex items-start gap-3 mt-2">
                 <AlertCircle size={16} className="text-danger shrink-0 mt-0.5" />
-                <p className="text-[11px] font-bold text-danger leading-tight">{eligibilityError}</p>
+                <p className="text-[11px] font-bold text-danger leading-tight">{activeError}</p>
               </div>
             )}
 
@@ -218,11 +387,11 @@ const Withdraw: React.FC = () => {
               <Button
                 type="submit"
                 variant="primary"
-                className="w-full h-14 font-black uppercase text-xs tracking-widest"
+                className="w-full h-14 font-black uppercase text-xs tracking-widest disabled:opacity-40"
                 loading={isLoading}
                 disabled={isSubmitDisabled}
               >
-                Confirm Withdrawal
+                {!isResolved && accountNumber.length === 10 ? 'Awaiting Resolution' : 'Confirm Withdrawal'}
               </Button>
             </div>
           </form>

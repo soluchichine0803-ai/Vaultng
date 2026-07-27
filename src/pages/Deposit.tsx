@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useSearchParams } from 'react-router-dom';
 import { pageTransition } from '../lib/animations';
 import {
   ArrowUpCircle,
@@ -16,10 +17,12 @@ import Button from '../components/ui/Button';
 import { depositService, type DepositRequest } from '../services/depositService';
 
 const Deposit: React.FC = () => {
-  const { user, token } = useAuthStore();
+  const { user, token, fetchUser } = useAuthStore();
   const { addToast } = useToastStore();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [amount, setAmount] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
   const [deposits, setDeposits] = useState<DepositRequest[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
 
@@ -40,6 +43,38 @@ const Deposit: React.FC = () => {
     fetchHistory();
   }, [token]);
 
+  // Handle Paystack callback verification
+  useEffect(() => {
+    const reference = searchParams.get('reference');
+    if (!reference) return;
+
+    const verifyPaystackPayment = async () => {
+      setIsVerifying(true);
+      try {
+        const res = await depositService.verifyPayment(reference);
+        if (res.status === 'success' || res.data?.status === 'APPROVED') {
+          addToast('Deposit verified and credited successfully!', 'success');
+          // Immediately sync / update user balance
+          await fetchUser();
+        } else {
+          addToast(res.message || 'Payment verification failed or was cancelled.', 'error');
+        }
+      } catch (error: any) {
+        console.error('Error verifying payment:', error);
+        const errMsg = error.response?.data?.message || 'Payment verification failed.';
+        addToast(errMsg, 'error');
+      } finally {
+        setIsVerifying(false);
+        // Clean query parameters from URL so verification is not triggered again on page refresh
+        setSearchParams({}, { replace: true });
+        // Refresh deposit history
+        fetchHistory();
+      }
+    };
+
+    verifyPaystackPayment();
+  }, [searchParams, fetchUser, setSearchParams]);
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -49,17 +84,21 @@ const Deposit: React.FC = () => {
       return;
     }
 
+    if (numericAmount < 3000) {
+      addToast('Minimum deposit amount is ₦3,000', 'error');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      const data = await depositService.createDeposit(numericAmount);
-      addToast('Deposit request submitted successfully', 'success');
-      setAmount('');
-      // Refresh history
-      setDeposits([data, ...deposits]);
+      // Call initializePayment instead of createDeposit
+      const res = await depositService.initializePayment(numericAmount);
+      addToast('Payment initialized. Redirecting to secure checkout...', 'success');
+      // Redirect to Paystack Checkout URL
+      window.location.href = res.authorizationUrl;
     } catch (error: any) {
-      const message = error.response?.data?.message || 'Failed to submit deposit request';
+      const message = error.response?.data?.message || 'Failed to initialize payment';
       addToast(message, 'error');
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -77,6 +116,17 @@ const Deposit: React.FC = () => {
 
   return (
     <motion.div variants={pageTransition} initial="initial" animate="animate" exit="exit" className="space-y-6">
+      {/* Verify Overlay */}
+      {isVerifying && (
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-sm flex flex-col items-center justify-center z-50 space-y-4">
+          <div className="p-6 bg-zinc-900 border border-white/[0.08] rounded-2xl flex flex-col items-center text-center max-w-sm mx-4">
+            <Loader2 className="w-12 h-12 text-purple-primary animate-spin mb-4" />
+            <h2 className="text-xl font-bold text-white mb-2">Verifying Payment...</h2>
+            <p className="text-gray-400 text-sm">Please do not refresh the page, close this tab, or click the back button.</p>
+          </div>
+        </div>
+      )}
+
       <header className="flex flex-col gap-0.5 lg:gap-1">
         <h1 className="text-lg lg:text-xl font-bold tracking-tight flex items-center gap-2">
           <ArrowUpCircle className="w-5 h-5 text-purple-primary" />
@@ -99,7 +149,7 @@ const Deposit: React.FC = () => {
                   placeholder="0.00"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isVerifying}
                   className="text-lg font-semibold no-spinner"
                 />
 
@@ -108,8 +158,9 @@ const Deposit: React.FC = () => {
                     <button
                       key={amt}
                       type="button"
+                      disabled={isSubmitting || isVerifying}
                       onClick={() => setAmount(amt.toString())}
-                      className="py-2 px-3 text-[11px] font-bold rounded-lg border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.05] hover:border-purple-primary/30 transition-all text-text-secondary"
+                      className="py-2 px-3 text-[11px] font-bold rounded-lg border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.05] hover:border-purple-primary/30 transition-all text-text-secondary disabled:opacity-50"
                     >
                       ₦{amt.toLocaleString()}
                     </button>
@@ -129,10 +180,10 @@ const Deposit: React.FC = () => {
               <Button
                 type="submit"
                 className="w-full h-12 text-base"
-                disabled={isSubmitting || !amount}
+                disabled={isSubmitting || isVerifying || !amount}
                 loading={isSubmitting}
               >
-                Submit Request
+                Pay with Paystack
               </Button>
             </form>
           </Card>
