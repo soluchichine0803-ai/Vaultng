@@ -178,10 +178,13 @@ model Withdrawal {
   userId          String
   amount          Decimal          @db.Decimal(15, 2)
   bankName        String
+  bankCode        String?
   accountNumber   String
   accountName     String
   status            WithdrawalStatus @default(PENDING)
   isLargeWithdrawal Boolean          @default(false)
+  recipientCode   String?
+  transferCode    String?
   approvedBy        String?
   rejectionReason   String?
   createdAt         DateTime         @default(now())
