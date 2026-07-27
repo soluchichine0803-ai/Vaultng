@@ -3,7 +3,8 @@ import crypto from 'crypto';
 import prisma from '../utils/prisma';
 import { PaymentService } from '../services/paymentService';
 import type { AuthRequest } from '../types/auth';
-import { DepositStatus } from '@prisma/client';
+import { DepositStatus, TransactionType, WithdrawalStatus } from '@prisma/client';
+import { walletService } from '../services/walletService';
 
 export class PaymentController {
   /**
@@ -80,7 +81,7 @@ export class PaymentController {
       const event = req.body;
       console.log(`[PaymentController] Webhook event received: ${event.event}`);
 
-      // We only process 'charge.success' events
+      // We process 'charge.success' and transfer events
       if (event.event === 'charge.success') {
         const reference = event.data.reference;
         const status = event.data.status;
@@ -97,6 +98,79 @@ export class PaymentController {
           } else {
             console.warn(`[PaymentController] Paystack verification failed for ref in hook: ${reference}. Status: ${paystackData.status}`);
           }
+        }
+      } else if (event.event === 'transfer.success') {
+        const transferCode = event.data.transfer_code;
+        console.log(`[PaymentController] Webhook transfer.success: code=${transferCode}`);
+
+        // Find the withdrawal record
+        const withdrawal = await prisma.withdrawal.findFirst({
+          where: { transferCode }
+        });
+
+        if (withdrawal && withdrawal.status === WithdrawalStatus.PENDING) {
+          await prisma.withdrawal.update({
+            where: { id: withdrawal.id },
+            data: { status: WithdrawalStatus.APPROVED }
+          });
+
+          // Send notification
+          await prisma.notification.create({
+            data: {
+              userId: withdrawal.userId,
+              title: 'Withdrawal Successful',
+              message: `Your withdrawal of ₦${Number(withdrawal.amount).toLocaleString()} to ${withdrawal.bankName} has been processed successfully.`,
+            }
+          });
+
+          console.log(`[PaymentController] Webhook successfully approved withdrawal for code: ${transferCode}`);
+        }
+      } else if (event.event === 'transfer.failed' || event.event === 'transfer.reversed') {
+        const transferCode = event.data.transfer_code;
+        let reason = 'Paystack transfer failed';
+        if (event.data.failures && event.data.failures.message) {
+          reason = event.data.failures.message;
+        } else if (event.data.failure_reason) {
+          reason = event.data.failure_reason;
+        }
+        console.log(`[PaymentController] Webhook transfer failed: code=${transferCode}, reason=${reason}`);
+
+        // Find the withdrawal record
+        const withdrawal = await prisma.withdrawal.findFirst({
+          where: { transferCode }
+        });
+
+        if (withdrawal && withdrawal.status === WithdrawalStatus.PENDING) {
+          // Refund user's wallet and update withdrawal record status to REJECTED
+          await prisma.$transaction(async (tx) => {
+            await walletService.credit(
+              withdrawal.userId,
+              withdrawal.amount,
+              TransactionType.ADJUSTMENT,
+              `Refund: Failed withdrawal to ${withdrawal.bankName} (${withdrawal.accountNumber})`,
+              transferCode,
+              tx
+            );
+
+            await tx.withdrawal.update({
+              where: { id: withdrawal.id },
+              data: {
+                status: WithdrawalStatus.REJECTED,
+                rejectionReason: reason
+              }
+            });
+          });
+
+          // Send notification
+          await prisma.notification.create({
+            data: {
+              userId: withdrawal.userId,
+              title: 'Withdrawal Failed',
+              message: `Your withdrawal of ₦${Number(withdrawal.amount).toLocaleString()} to ${withdrawal.bankName} failed and has been refunded to your available balance.`,
+            }
+          });
+
+          console.log(`[PaymentController] Webhook successfully refunded and rejected withdrawal for code: ${transferCode}`);
         }
       } else {
         console.log(`[PaymentController] Ignored event type: ${event.event}`);
