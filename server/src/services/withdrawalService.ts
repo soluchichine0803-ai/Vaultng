@@ -18,37 +18,46 @@ export class WithdrawalService {
       throw new Error('Withdrawal amount must be greater than zero');
     }
 
-    // 2. Validate Time (10:00 AM – 6:00 PM Africa/Lagos)
-    const now = new Date();
-    const lagosTime = new Intl.DateTimeFormat('en-GB', {
-      timeZone: 'Africa/Lagos',
-      hour: 'numeric',
-      hour12: false,
-    }).format(now);
+    // 2. Validate Time & Days (with development mode bypass support)
+    const isDevelopment = process.env.NODE_ENV !== 'production';
 
-    const currentHour = parseInt(lagosTime, 10);
-    if (currentHour < 10 || currentHour >= 18) {
-      throw new Error('Withdrawals are only allowed between 10:00 AM and 6:00 PM WAT');
-    }
+    if (!isDevelopment) {
+      const now = new Date();
+      const lagosTime = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Africa/Lagos',
+        hour: 'numeric',
+        hour12: false,
+      }).format(now);
 
-    // 3. Validate Days
-    // Tuesday: ₦3,000 – ₦50,000
-    // Thursday: Above ₦50,000
-    const dayOfWeek = new Intl.DateTimeFormat('en-GB', {
-      timeZone: 'Africa/Lagos',
-      weekday: 'long',
-    }).format(now);
-
-    if (amount >= 3000 && amount <= 50000) {
-      if (dayOfWeek !== 'Tuesday') {
-        throw new Error('Withdrawals between ₦3,000 and ₦50,000 are only allowed on Tuesdays');
+      const currentHour = parseInt(lagosTime, 10);
+      if (currentHour < 10 || currentHour >= 18) {
+        throw new Error('Withdrawals are only allowed between 10:00 AM and 6:00 PM WAT');
       }
-    } else if (amount > 50000) {
-      if (dayOfWeek !== 'Thursday') {
-        throw new Error('Withdrawals above ₦50,000 are only allowed on Thursdays');
+
+      // 3. Validate Days
+      // Tuesday: ₦3,000 – ₦50,000
+      // Thursday: Above ₦50,000
+      const dayOfWeek = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Africa/Lagos',
+        weekday: 'long',
+      }).format(now);
+
+      if (amount >= 3000 && amount <= 50000) {
+        if (dayOfWeek !== 'Tuesday') {
+          throw new Error('Withdrawals between ₦3,000 and ₦50,000 are only allowed on Tuesdays');
+        }
+      } else if (amount > 50000) {
+        if (dayOfWeek !== 'Thursday') {
+          throw new Error('Withdrawals above ₦50,000 are only allowed on Thursdays');
+        }
+      } else {
+         throw new Error('Minimum withdrawal amount is ₦3,000');
       }
     } else {
-       throw new Error('Minimum withdrawal amount is ₦3,000');
+      // In development bypass mode, we must still enforce the minimum withdrawal amount of ₦3,000
+      if (amount < 3000) {
+        throw new Error('Minimum withdrawal amount is ₦3,000');
+      }
     }
 
     // 4. Large Withdrawal Flag

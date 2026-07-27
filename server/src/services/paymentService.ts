@@ -70,7 +70,9 @@ export class PaymentService {
 
     if (!response.ok || !data.status) {
       console.error('[PaymentService] Paystack verification failed:', data);
-      throw new Error(data.message || 'Failed to verify transaction with Paystack');
+      const err = new Error(data.message || 'Failed to verify transaction with Paystack') as any;
+      err.status = response.status;
+      throw err;
     }
 
     return data.data; // contains status, amount, reference, customer, etc.
@@ -164,5 +166,82 @@ export class PaymentService {
 
     console.log(`[PaymentService] Deposit ${reference} successfully processed and credited.`);
     return result;
+  }
+
+  /**
+   * Periodically scans for PENDING Paystack deposits older than 30 minutes,
+   * performs a final server-side status check with Paystack, and transition
+   * them to either SUCCESS (if paid) or REJECTED with rejectionReason EXPIRED.
+   */
+  static async cleanupStaleDeposits() {
+    try {
+      const timeoutMinutes = 30;
+      const thresholdTime = new Date(Date.now() - timeoutMinutes * 60 * 1000);
+
+      // Find all PENDING deposits with method PAYSTACK created before thresholdTime
+      const staleDeposits = await prisma.deposit.findMany({
+        where: {
+          status: DepositStatus.PENDING,
+          method: 'PAYSTACK',
+          createdAt: {
+            lt: thresholdTime,
+          },
+        },
+      });
+
+      if (staleDeposits.length === 0) {
+        return;
+      }
+
+      console.log(`[PaymentService] Found ${staleDeposits.length} stale pending deposits for cleanup.`);
+
+      for (const deposit of staleDeposits) {
+        try {
+          console.log(`[PaymentService] Verifying stale deposit ref=${deposit.reference} with Paystack before expiry...`);
+
+          let paystackData: any = null;
+          let isDefinitivelyNotFound = false;
+
+          try {
+            paystackData = await this.verifyTransaction(deposit.reference);
+          } catch (verifyError: any) {
+            // If Paystack returns a definitive 404 (or the message indicates transaction not found), we treat it as definitively unpaid
+            if (verifyError.status === 404 || verifyError.message?.toLowerCase().includes('transaction not found')) {
+              console.log(`[PaymentService] Paystack verified transaction does not exist for ref=${deposit.reference}`);
+              isDefinitivelyNotFound = true;
+            } else {
+              // This is a transient error (e.g. rate limit, connection timeout, server 500 error, etc.)
+              // Skip expiring this deposit on this run to allow subsequent retries.
+              console.warn(`[PaymentService] Skipping stale deposit ref=${deposit.reference} due to transient verification error:`, verifyError.message);
+              continue;
+            }
+          }
+
+          if (paystackData && paystackData.status === 'success') {
+            // Payment actually succeeded, process credit
+            console.log(`[PaymentService] Stale deposit ref=${deposit.reference} was paid! Processing credit...`);
+            await this.processDepositSuccess(deposit.reference, paystackData);
+          } else if (paystackData || isDefinitivelyNotFound) {
+            // We have a definitive response from Paystack (e.g., status is 'abandoned' or 'failed', or 404 not found)
+            // Mark as REJECTED with rejectionReason 'EXPIRED' only if it's still in the PENDING state (prevents concurrent race conditions)
+            console.log(`[PaymentService] Expiring stale pending deposit ref=${deposit.reference}`);
+            await prisma.deposit.updateMany({
+              where: {
+                id: deposit.id,
+                status: DepositStatus.PENDING,
+              },
+              data: {
+                status: DepositStatus.REJECTED,
+                rejectionReason: 'EXPIRED',
+              },
+            });
+          }
+        } catch (singleErr: any) {
+          console.error(`[PaymentService] Error cleaning up stale deposit ${deposit.reference}:`, singleErr);
+        }
+      }
+    } catch (error: any) {
+      console.error('[PaymentService] Error running stale deposits cleanup:', error);
+    }
   }
 }
