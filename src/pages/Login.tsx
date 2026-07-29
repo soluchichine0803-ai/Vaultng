@@ -29,7 +29,13 @@ const Login: React.FC = () => {
     e.preventDefault();
     try {
       await login(formData);
-      navigate('/dashboard');
+      // Retrieve updated user to check role
+      const user = useAuthStore.getState().user;
+      if (user?.role === 'ADMIN') {
+        navigate('/admin');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err) {
       // Error is handled by the store
     }
@@ -89,12 +95,6 @@ const Login: React.FC = () => {
                 Remember Me
               </label>
             </div>
-            <Link
-              to="/forgot-password"
-              className="text-xs font-bold text-purple-soft hover:text-purple-bright transition-colors uppercase tracking-wider"
-            >
-              Forgot Password?
-            </Link>
           </div>
 
           <Button
