@@ -20,9 +20,7 @@ const Withdraw: React.FC = () => {
   const [selectedBankName, setSelectedBankName] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [accountNumber, setAccountNumber] = useState('');
-  const [resolvedAccountName, setResolvedAccountName] = useState('');
-  const [isResolving, setIsResolving] = useState(false);
-  const [resolutionError, setResolutionError] = useState('');
+  const [accountName, setAccountName] = useState('');
 
   const [isLoading, setIsLoading] = useState(false);
   const [withdrawals, setWithdrawals] = useState<any[]>([]);
@@ -57,34 +55,6 @@ const Withdraw: React.FC = () => {
     fetchBanks();
     fetchHistory();
   }, []);
-
-  // 3. Resolve Account Number automatically on bank selected and 10 digits
-  useEffect(() => {
-    const resolve = async () => {
-      if (selectedBankCode && accountNumber.length === 10) {
-        setIsResolving(true);
-        setResolutionError('');
-        setResolvedAccountName('');
-        try {
-          const resolved = await withdrawalService.resolveAccount(accountNumber, selectedBankCode);
-          setResolvedAccountName(resolved.accountName);
-          toast.success(`Account verified: ${resolved.accountName}`);
-        } catch (error: any) {
-          console.error(error);
-          const errMsg = error.response?.data?.message || "We couldn't verify those bank account details. Please confirm the bank and account number and try again.";
-          setResolutionError(errMsg);
-          toast.error(errMsg);
-        } finally {
-          setIsResolving(false);
-        }
-      } else {
-        setResolvedAccountName('');
-        setResolutionError('');
-      }
-    };
-
-    resolve();
-  }, [accountNumber, selectedBankCode]);
 
   // 4. Time and Day Calculation (WAT)
   const now = new Date();
@@ -134,15 +104,14 @@ const Withdraw: React.FC = () => {
     !amount ||
     !selectedBankCode ||
     accountNumber.length !== 10 ||
-    !resolvedAccountName ||
-    isResolving ||
+    !accountName.trim() ||
     isLoading;
 
   const handleWithdraw = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!amount || !selectedBankCode || !accountNumber || !resolvedAccountName) {
-      toast.error('Please fill in all fields and verify bank details');
+    if (!amount || !selectedBankCode || !accountNumber || !accountName.trim()) {
+      toast.error('Please fill in all fields');
       return;
     }
 
@@ -157,6 +126,7 @@ const Withdraw: React.FC = () => {
         amount: Number(amount),
         bankCode: selectedBankCode,
         accountNumber,
+        accountName: accountName.trim(),
       });
       toast.success('Withdrawal request submitted successfully');
       setAmount('');
@@ -164,7 +134,7 @@ const Withdraw: React.FC = () => {
       setSelectedBankName('');
       setSearchQuery('');
       setAccountNumber('');
-      setResolvedAccountName('');
+      setAccountName('');
       fetchUser();
       fetchHistory();
     } catch (error: any) {
@@ -291,31 +261,19 @@ const Withdraw: React.FC = () => {
               required
             />
 
-            {/* Account Name - Read-only */}
+            {/* Account Name - Manual Input */}
             <div className="space-y-1.5">
               <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider ml-1">
                 Account Name
               </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder={isResolving ? "Verifying account..." : "Will resolve automatically"}
-                  value={resolvedAccountName}
-                  readOnly
-                  disabled
-                  className="w-full h-12 bg-white/[0.01] border border-white/[0.05] text-text-secondary/80 outline-none px-4 py-3 text-sm rounded-lg cursor-not-allowed opacity-80"
-                />
-                {isResolving && (
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                    <div className="w-4 h-4 border-2 border-purple-primary border-t-transparent rounded-full animate-spin"></div>
-                  </div>
-                )}
-              </div>
-              {resolutionError && (
-                <p className="text-[11px] text-danger font-medium ml-1">
-                  {resolutionError}
-                </p>
-              )}
+              <input
+                type="text"
+                placeholder="Enter account holder name"
+                value={accountName}
+                onChange={(e) => setAccountName(e.target.value)}
+                required
+                className="w-full h-12 bg-white/[0.02] border border-white/[0.08] focus:border-purple-primary/50 focus:bg-white/[0.05] focus:shadow-[0_0_30px_rgba(124,58,237,0.08)] transition-all duration-300 outline-none px-4 py-3 text-sm rounded-lg text-text-primary placeholder:text-text-muted/40"
+              />
             </div>
 
             {eligibilityError && (

@@ -92,7 +92,8 @@ export class WithdrawalService {
     userId: string,
     amount: number,
     bankCode: string,
-    accountNumber: string
+    accountNumber: string,
+    accountName: string
   ) {
     // 1. Validate Amount
     if (amount <= 0) {
@@ -155,11 +156,6 @@ export class WithdrawalService {
       console.warn('[WithdrawalService] Failed to match bank name from code', err);
     }
 
-    // 4. Resolve the account number using Paystack API (Backend verification)
-    console.log('[WithdrawalService] Backend independently verifying account name...');
-    const resolvedAccount = await this.resolveAccount(accountNumber, bankCode);
-    const verifiedAccountName = resolvedAccount.accountName;
-
     // 5. Generate a unique reference for the withdrawal request tracking
     const uniqueRef = `WTH-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
 
@@ -191,7 +187,7 @@ export class WithdrawalService {
           bankName,
           bankCode,
           accountNumber,
-          accountName: verifiedAccountName,
+          accountName: accountName,
           status: WithdrawalStatus.PENDING,
           isLargeWithdrawal,
         },

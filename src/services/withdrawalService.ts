@@ -15,6 +15,7 @@ export const withdrawalService = {
     amount: number;
     bankCode: string;
     accountNumber: string;
+    accountName: string;
   }) => {
     const response = await api.post('/withdrawals', data);
     return response.data;
