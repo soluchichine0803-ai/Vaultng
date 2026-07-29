@@ -163,32 +163,3 @@ export const logout = async (req: AuthRequest, res: Response) => {
   });
 };
 
-export const forgotPassword = async (req: AuthRequest, res: Response) => {
-  try {
-    await authService.forgotPassword(req.body.email);
-    res.status(200).json({
-      status: 'success',
-      message: 'If your email is in our system, you will receive a reset link.',
-    });
-  } catch (error: any) {
-    res.status(400).json({
-      status: 'error',
-      message: error.message || 'Forgot password request failed',
-    });
-  }
-};
-
-export const resetPassword = async (req: AuthRequest, res: Response) => {
-  try {
-    await authService.resetPassword(req.body.password);
-    res.status(200).json({
-      status: 'success',
-      message: 'Password reset successfully',
-    });
-  } catch (error: any) {
-    res.status(400).json({
-      status: 'error',
-      message: error.message || 'Password reset failed',
-    });
-  }
-};

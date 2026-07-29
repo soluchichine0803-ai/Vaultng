@@ -17,14 +17,6 @@ export const authService = {
     return response.data.data;
   },
 
-  forgotPassword: async (email: string): Promise<void> => {
-    await api.post('/auth/forgot-password', { email });
-  },
-
-  resetPassword: async (password: string, _token: string): Promise<void> => {
-    // Note: token is currently ignored by backend placeholder
-    await api.post('/auth/reset-password', { password });
-  },
 
   getCurrentUser: async (): Promise<User> => {
     const response = await api.get('/auth/me');

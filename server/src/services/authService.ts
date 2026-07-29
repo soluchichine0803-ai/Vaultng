@@ -138,22 +138,6 @@ export const authService = {
     return { user, token };
   },
 
-  forgotPassword: async (email: string) => {
-    // Placeholder logic
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) {
-      // We don't want to leak if a user exists or not
-      return;
-    }
-    console.log(`Password reset requested for ${email}`);
-    return;
-  },
-
-  resetPassword: async (password: string) => {
-    // Placeholder logic
-    console.log('Password reset logic executed');
-    return;
-  },
 
   updateProfile: async (userId: string, data: { username?: string, email?: string, phone?: string }) => {
     return prisma.user.update({

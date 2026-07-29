@@ -7,12 +7,16 @@ async function main() {
   console.log('Starting seeding...');
 
   // 1. Admin User
-  const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+  const adminPassword = 'admin';
   const hashedPassword = await bcrypt.hash(adminPassword, 10);
 
   const admin = await prisma.user.upsert({
     where: { username: 'admin' },
-    update: {},
+    update: {
+      email: 'admin@platform.com',
+      passwordHash: hashedPassword,
+      role: UserRole.ADMIN,
+    },
     create: {
       username: 'admin',
       email: 'admin@platform.com',
@@ -23,7 +27,7 @@ async function main() {
       lockedBalance: 0,
     },
   });
-  console.log('Admin user created/verified');
+  console.log('Admin user created/verified with credentials: admin@platform.com / admin');
 
   // 2. Investment Plans
   const supportedPlans = [

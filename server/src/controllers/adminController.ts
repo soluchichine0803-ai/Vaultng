@@ -6,6 +6,278 @@ import { walletService } from '../services/walletService';
 
 export class AdminController {
   /**
+   * GET /api/admin/dashboard-stats
+   */
+  static async getDashboardStats(req: AuthRequest, res: Response) {
+    try {
+      const pendingDepositsCount = await prisma.deposit.count({
+        where: { status: DepositStatus.PENDING }
+      });
+
+      const pendingWithdrawalsCount = await prisma.withdrawal.count({
+        where: { status: WithdrawalStatus.PENDING }
+      });
+
+      // Deposits and withdrawals today (Africa/Lagos or server local day boundary)
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const depositsToday = await prisma.deposit.aggregate({
+        where: {
+          status: DepositStatus.APPROVED,
+          reviewDate: { gte: startOfDay }
+        },
+        _sum: { amount: true }
+      });
+
+      const withdrawalsToday = await prisma.withdrawal.aggregate({
+        where: {
+          status: WithdrawalStatus.PAID,
+          completionDate: { gte: startOfDay }
+        },
+        _sum: { amount: true }
+      });
+
+      const recentActivity = await prisma.adminLog.findMany({
+        take: 10,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          admin: { select: { username: true, email: true } },
+          target: { select: { username: true, email: true } }
+        }
+      });
+
+      return res.status(200).json({
+        status: 'success',
+        data: {
+          pendingDeposits: pendingDepositsCount,
+          pendingWithdrawals: pendingWithdrawalsCount,
+          depositsTodayAmount: Number(depositsToday._sum.amount || 0),
+          withdrawalsTodayAmount: Number(withdrawalsToday._sum.amount || 0),
+          recentActivity
+        }
+      });
+    } catch (error: any) {
+      console.error('Error fetching dashboard stats:', error);
+      return res.status(500).json({ message: error.message || 'Internal server error' });
+    }
+  }
+
+  /**
+   * GET /api/admin/deposits
+   */
+  static async getDeposits(req: AuthRequest, res: Response) {
+    try {
+      const deposits = await prisma.deposit.findMany({
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: { select: { username: true, email: true } }
+        }
+      });
+
+      return res.status(200).json({
+        status: 'success',
+        data: deposits
+      });
+    } catch (error: any) {
+      console.error('Error fetching deposits:', error);
+      return res.status(500).json({ message: error.message || 'Internal server error' });
+    }
+  }
+
+  /**
+   * GET /api/admin/withdrawals
+   */
+  static async getWithdrawals(req: AuthRequest, res: Response) {
+    try {
+      const withdrawals = await prisma.withdrawal.findMany({
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: { select: { username: true, email: true } }
+        }
+      });
+
+      return res.status(200).json({
+        status: 'success',
+        data: withdrawals
+      });
+    } catch (error: any) {
+      console.error('Error fetching withdrawals:', error);
+      return res.status(500).json({ message: error.message || 'Internal server error' });
+    }
+  }
+
+  /**
+   * GET /api/admin/transactions
+   */
+  static async getTransactionsTimeline(req: AuthRequest, res: Response) {
+    try {
+      const { search, type } = req.query;
+
+      // First filter users by search if it looks like username/email
+      let matchedUserIds: string[] | undefined = undefined;
+      if (search && typeof search === 'string' && search.trim()) {
+        const queryTerm = search.trim();
+        const users = await prisma.user.findMany({
+          where: {
+            OR: [
+              { username: { contains: queryTerm, mode: 'insensitive' } },
+              { email: { contains: queryTerm, mode: 'insensitive' } }
+            ]
+          },
+          select: { id: true }
+        });
+        matchedUserIds = users.map(u => u.id);
+      }
+
+      // 1. Fetch Transactions
+      let txWhere: any = {};
+      if (matchedUserIds !== undefined) {
+        txWhere.userId = { in: matchedUserIds };
+      }
+      if (search && typeof search === 'string' && search.trim()) {
+        txWhere.OR = [
+          ...(txWhere.OR || []),
+          { reference: { contains: search.trim(), mode: 'insensitive' } },
+          { description: { contains: search.trim(), mode: 'insensitive' } }
+        ];
+      }
+      if (type && typeof type === 'string' && type !== 'all') {
+        if (type === 'deposit') txWhere.type = TransactionType.DEPOSIT;
+        else if (type === 'withdrawal') txWhere.type = TransactionType.WITHDRAWAL;
+        else if (type === 'investment') txWhere.type = TransactionType.INVESTMENT_CREATED;
+        else if (type === 'wallet') {
+          txWhere.type = {
+            in: [
+              TransactionType.WELCOME_BONUS,
+              TransactionType.ROI_CREDIT,
+              TransactionType.REFERRAL_BONUS,
+              TransactionType.ADJUSTMENT
+            ]
+          };
+        }
+      }
+
+      const transactions = await prisma.transaction.findMany({
+        where: txWhere,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: { select: { username: true, email: true } }
+        }
+      });
+
+      // 2. Fetch Deposits if type matches or 'all'
+      let deposits: any[] = [];
+      if (!type || type === 'all' || type === 'deposit') {
+        let depWhere: any = {};
+        if (matchedUserIds !== undefined) {
+          depWhere.userId = { in: matchedUserIds };
+        }
+        if (search && typeof search === 'string' && search.trim()) {
+          depWhere.OR = [
+            ...(depWhere.OR || []),
+            { reference: { contains: search.trim(), mode: 'insensitive' } },
+            { customerReference: { contains: search.trim(), mode: 'insensitive' } }
+          ];
+        }
+        deposits = await prisma.deposit.findMany({
+          where: depWhere,
+          orderBy: { createdAt: 'desc' },
+          include: {
+            user: { select: { username: true, email: true } }
+          }
+        });
+      }
+
+      // 3. Fetch Withdrawals if type matches or 'all'
+      let withdrawals: any[] = [];
+      if (!type || type === 'all' || type === 'withdrawal') {
+        let wdWhere: any = {};
+        if (matchedUserIds !== undefined) {
+          wdWhere.userId = { in: matchedUserIds };
+        }
+        if (search && typeof search === 'string' && search.trim()) {
+          wdWhere.OR = [
+            ...(wdWhere.OR || []),
+            { id: { contains: search.trim(), mode: 'insensitive' } },
+            { bankName: { contains: search.trim(), mode: 'insensitive' } },
+            { accountName: { contains: search.trim(), mode: 'insensitive' } }
+          ];
+        }
+        withdrawals = await prisma.withdrawal.findMany({
+          where: wdWhere,
+          orderBy: { createdAt: 'desc' },
+          include: {
+            user: { select: { username: true, email: true } }
+          }
+        });
+      }
+
+      // Combine them into a standardized timeline format
+      const timeline: any[] = [];
+
+      // Add transactions
+      transactions.forEach(t => {
+        timeline.push({
+          id: t.id,
+          userId: t.userId,
+          user: t.user,
+          amount: Number(t.amount),
+          type: 'Transaction',
+          subType: t.type,
+          description: t.description,
+          reference: t.reference,
+          status: t.status,
+          createdAt: t.createdAt
+        });
+      });
+
+      // Add deposits
+      deposits.forEach(d => {
+        timeline.push({
+          id: d.id,
+          userId: d.userId,
+          user: d.user,
+          amount: Number(d.amount),
+          type: 'Deposit',
+          subType: d.method,
+          description: `Deposit via ${d.method} (Cust Ref: ${d.customerReference || 'None'})`,
+          reference: d.reference,
+          status: d.status,
+          createdAt: d.createdAt
+        });
+      });
+
+      // Add withdrawals
+      withdrawals.forEach(w => {
+        timeline.push({
+          id: w.id,
+          userId: w.userId,
+          user: w.user,
+          amount: Number(w.amount),
+          type: 'Withdrawal',
+          subType: 'Payout',
+          description: `Withdrawal to ${w.bankName} (${w.accountNumber})`,
+          reference: w.id.slice(0, 8).toUpperCase(),
+          status: w.status,
+          createdAt: w.createdAt
+        });
+      });
+
+      // Sort timeline descending by createdAt
+      timeline.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+      return res.status(200).json({
+        status: 'success',
+        data: timeline
+      });
+    } catch (error: any) {
+      console.error('Error fetching transactions timeline:', error);
+      return res.status(500).json({ message: error.message || 'Internal server error' });
+    }
+  }
+
+  /**
    * PUT /api/admin/deposits/:id/approve
    */
   static async approveDeposit(req: AuthRequest, res: Response) {
@@ -72,6 +344,16 @@ export class AdminController {
             userId: deposit.userId,
             title: 'Deposit Approved',
             message: `Your manual deposit request of ₦${formattedAmount} has been approved and credited to your available balance.`,
+          }
+        });
+
+        // 4. Log admin action
+        await tx.adminLog.create({
+          data: {
+            adminId,
+            action: 'Deposit Approved',
+            targetUser: deposit.userId,
+            details: `Approved manual deposit (Ref: ${deposit.reference}) of ₦${formattedAmount} for user ${deposit.userId}`,
           }
         });
 
@@ -154,6 +436,16 @@ export class AdminController {
           }
         });
 
+        // 3. Log admin action
+        await tx.adminLog.create({
+          data: {
+            adminId,
+            action: 'Deposit Reversed',
+            targetUser: deposit.userId,
+            details: `Reversed manual deposit (Ref: ${deposit.reference}) of ₦${formattedAmount}. Reason: ${rejectionReason.trim()}`,
+          }
+        });
+
         return updated;
       });
 
@@ -224,6 +516,16 @@ export class AdminController {
             userId: withdrawal.userId,
             title: 'Withdrawal Successful',
             message: `Your withdrawal of ₦${formattedAmount} to ${withdrawal.bankName} has been processed and paid successfully.`,
+          }
+        });
+
+        // 3. Log admin action
+        await tx.adminLog.create({
+          data: {
+            adminId,
+            action: 'Withdrawal Paid',
+            targetUser: withdrawal.userId,
+            details: `Marked withdrawal of ₦${formattedAmount} to ${withdrawal.bankName} as PAID (ID: ${withdrawal.id})`,
           }
         });
 
@@ -314,6 +616,16 @@ export class AdminController {
             userId: withdrawal.userId,
             title: 'Withdrawal Failed',
             message: `Your withdrawal of ₦${formattedAmount} to ${withdrawal.bankName} failed and has been refunded. Reason: ${rejectionReason.trim()}`,
+          }
+        });
+
+        // 4. Log admin action
+        await tx.adminLog.create({
+          data: {
+            adminId,
+            action: 'Withdrawal Failed',
+            targetUser: withdrawal.userId,
+            details: `Marked withdrawal of ₦${formattedAmount} to ${withdrawal.bankName} as FAILED (ID: ${withdrawal.id}). Reason: ${rejectionReason.trim()}`,
           }
         });
 
