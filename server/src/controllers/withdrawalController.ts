@@ -55,7 +55,7 @@ export class WithdrawalController {
    */
   static async create(req: AuthRequest, res: Response) {
     try {
-      const { amount, bankCode, accountNumber } = req.body;
+      const { amount, bankCode, accountNumber, accountName } = req.body;
       const userId = req.user?.id;
 
       if (!userId) {
@@ -65,10 +65,17 @@ export class WithdrawalController {
         });
       }
 
-      if (!amount || !bankCode || !accountNumber) {
+      if (!amount || !bankCode || !accountNumber || !accountName) {
         return res.status(400).json({
           status: 'error',
-          message: 'Amount, bank code, and account number are required'
+          message: 'Amount, bank code, account number, and account name are required'
+        });
+      }
+
+      if (typeof accountName !== 'string' || !accountName.trim()) {
+        return res.status(400).json({
+          status: 'error',
+          message: 'Account name must be a valid text'
         });
       }
 
@@ -84,7 +91,8 @@ export class WithdrawalController {
         userId,
         withdrawalAmount,
         bankCode,
-        accountNumber
+        accountNumber,
+        accountName.trim()
       );
 
       return res.status(201).json({

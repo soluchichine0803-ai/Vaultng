@@ -27,6 +27,7 @@ enum DepositStatus {
   APPROVED
   REJECTED
   FAILED
+  REVERSED
 }
 
 enum WithdrawalStatus {
@@ -34,6 +35,7 @@ enum WithdrawalStatus {
   APPROVED
   REJECTED
   FAILED
+  PAID
 }
 
 enum BannerType {
@@ -156,17 +158,19 @@ model Investment {
 }
 
 model Deposit {
-  id              String        @id @default(uuid())
-  userId          String
-  amount          Decimal       @db.Decimal(15, 2)
-  method          String        @default("MANUAL")
-  reference       String        @unique
-  proofImageUrl   String?
-  status          DepositStatus @default(PENDING)
-  approvedBy      String?
-  rejectionReason String?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id                String        @id @default(uuid())
+  userId            String
+  amount            Decimal       @db.Decimal(15, 2)
+  method            String        @default("MANUAL")
+  reference         String        @unique
+  customerReference String?
+  proofImageUrl     String?
+  status            DepositStatus @default(PENDING)
+  approvedBy        String?
+  rejectionReason   String?
+  reviewDate        DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
 
   user            User          @relation(fields: [userId], references: [id])
 
@@ -189,6 +193,7 @@ model Withdrawal {
   transferCode    String?
   approvedBy        String?
   rejectionReason   String?
+  completionDate    DateTime?
   createdAt         DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
 

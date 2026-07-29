@@ -12,11 +12,26 @@ export class DepositService {
   }
 
   /**
-   * Creates a new deposit request
+   * Creates a new manual deposit request
    */
-  static async createDepositRequest(userId: string, amount: number) {
+  static async createDepositRequest(
+    userId: string,
+    amount: number,
+    method: string,
+    proofImageUrl: string,
+    customerReference?: string
+  ) {
     if (amount <= 0) {
       throw new Error('Amount must be greater than zero');
+    }
+
+    const trimmedMethod = method.trim();
+    if (!trimmedMethod) {
+      throw new Error('Payment method is required');
+    }
+
+    if (!proofImageUrl) {
+      throw new Error('Proof of payment is required');
     }
 
     // Generate a unique reference and ensure it doesn't already exist
@@ -32,15 +47,33 @@ export class DepositService {
       });
     }
 
-    return await prisma.deposit.create({
+    const deposit = await prisma.deposit.create({
       data: {
         userId,
         amount,
         reference,
+        customerReference: customerReference || null,
+        proofImageUrl,
         status: DepositStatus.PENDING,
-        method: 'MANUAL'
+        method: trimmedMethod,
       }
     });
+
+    // Create user notification
+    const formattedAmount = amount.toLocaleString('en-NG', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+
+    await prisma.notification.create({
+      data: {
+        userId,
+        title: 'Deposit Submitted',
+        message: `Your manual deposit request of ₦${formattedAmount} (${trimmedMethod}) has been submitted for review. Reference: ${reference}`,
+      }
+    });
+
+    return deposit;
   }
 
   /**

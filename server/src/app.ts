@@ -1,6 +1,7 @@
 import express, { type Request, type Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
 import authRoutes from './routes/authRoutes';
 import planRoutes from './routes/planRoutes';
 import investmentRoutes from './routes/investmentRoutes';
@@ -9,6 +10,7 @@ import withdrawalRoutes from './routes/withdrawalRoutes';
 import referralRoutes from './routes/referralRoutes';
 import notificationRoutes from './routes/notificationRoutes';
 import paymentRoutes from './routes/paymentRoutes';
+import adminRoutes from './routes/adminRoutes';
 
 dotenv.config();
 
@@ -25,6 +27,9 @@ app.use(express.json({
   }
 }));
 
+// Serve uploaded proof files statically
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/plans', planRoutes);
@@ -34,6 +39,7 @@ app.use('/api/withdrawals', withdrawalRoutes);
 app.use('/api/referrals', referralRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req: Request, res: Response) => {
