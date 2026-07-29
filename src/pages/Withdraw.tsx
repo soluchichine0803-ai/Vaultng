@@ -380,7 +380,8 @@ const Withdraw: React.FC = () => {
                     withdrawals.map((w) => {
                       const getStatusIcon = (status: string) => {
                         switch (status) {
-                          case 'APPROVED': return <CheckCircle2 size={14} className="text-success" />;
+                          case 'APPROVED':
+                          case 'PAID': return <CheckCircle2 size={14} className="text-success" />;
                           case 'REJECTED': return <XCircle size={14} className="text-danger" />;
                           case 'FAILED': return <XCircle size={14} className="text-danger" />;
                           case 'PENDING': return <Timer size={14} className="text-purple-soft" />;
@@ -411,7 +412,7 @@ const Withdraw: React.FC = () => {
                             <div className="flex items-center gap-2">
                               {getStatusIcon(w.status)}
                               <span className={`text-[10px] font-black uppercase tracking-widest ${
-                                w.status === 'APPROVED' ? 'text-success' :
+                                w.status === 'APPROVED' || w.status === 'PAID' ? 'text-success' :
                                   w.status === 'REJECTED' || w.status === 'FAILED' ? 'text-danger' :
                                 'text-purple-soft'
                               }`}>

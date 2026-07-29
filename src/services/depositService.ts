@@ -3,45 +3,39 @@ import api from '../lib/api';
 export interface DepositRequest {
   id: string;
   amount: number;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'REVERSED';
   reference: string;
+  customerReference?: string | null;
+  proofImageUrl?: string | null;
+  method: string;
   createdAt: string;
 }
 
-export interface PaymentInitializationResponse {
-  authorizationUrl: string;
-  reference: string;
-  accessCode: string;
-}
-
-export interface PaymentVerificationResponse {
-  status: string;
-  message: string;
-  data: {
-    reference: string;
-    amount: number;
-    status: string;
-  };
-}
-
 export const depositService = {
-  createDeposit: async (amount: number): Promise<DepositRequest> => {
-    const response = await api.post('/deposits', { amount });
+  createDeposit: async (params: {
+    amount: number;
+    method: string;
+    proofFile: File;
+    customerReference?: string;
+  }): Promise<DepositRequest> => {
+    const formData = new FormData();
+    formData.append('amount', params.amount.toString());
+    formData.append('method', params.method);
+    formData.append('proof', params.proofFile);
+    if (params.customerReference) {
+      formData.append('customerReference', params.customerReference);
+    }
+
+    const response = await api.post('/deposits', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return response.data;
   },
 
   getDepositHistory: async (): Promise<DepositRequest[]> => {
     const response = await api.get('/deposits/me');
-    return response.data;
-  },
-
-  initializePayment: async (amount: number): Promise<PaymentInitializationResponse> => {
-    const response = await api.post('/payments/initialize', { amount });
-    return response.data;
-  },
-
-  verifyPayment: async (reference: string): Promise<PaymentVerificationResponse> => {
-    const response = await api.get(`/payments/verify/${encodeURIComponent(reference)}`);
     return response.data;
   }
 };

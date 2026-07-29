@@ -85,77 +85,8 @@ export class WithdrawalService {
   }
 
   /**
-   * Creates a Paystack transfer recipient.
-   */
-  static async createTransferRecipient(bankCode: string, accountNumber: string, accountName: string) {
-    const secretKey = process.env.PAYSTACK_SECRET_KEY;
-    if (!secretKey) {
-      throw new Error('PAYSTACK_SECRET_KEY is not configured');
-    }
-
-    console.log(`[WithdrawalService] Creating transfer recipient: name=${accountName}, bank=${bankCode}`);
-    const response = await fetch('https://api.paystack.co/transferrecipient', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${secretKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        type: 'nuban',
-        name: accountName,
-        account_number: accountNumber,
-        bank_code: bankCode,
-        currency: 'NGN',
-      }),
-    });
-
-    const data: any = await response.json();
-    if (!response.ok || !data.status) {
-      console.error('[WithdrawalService] Paystack transfer recipient creation failed:', data);
-      throw new Error(data.message || 'Failed to create Paystack transfer recipient');
-    }
-
-    return data.data; // contains recipient_code, etc.
-  }
-
-  /**
-   * Initiates a Paystack transfer.
-   */
-  static async initiateTransfer(amount: number, recipientCode: string, reference: string) {
-    const secretKey = process.env.PAYSTACK_SECRET_KEY;
-    if (!secretKey) {
-      throw new Error('PAYSTACK_SECRET_KEY is not configured');
-    }
-
-    const amountInKobo = Math.round(amount * 100);
-    console.log(`[WithdrawalService] Initiating transfer: amount=${amount} NGN (${amountInKobo} Kobo), recipient=${recipientCode}`);
-
-    const response = await fetch('https://api.paystack.co/transfer', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${secretKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        source: 'balance',
-        amount: amountInKobo,
-        recipient: recipientCode,
-        reason: `Withdrawal Ref: ${reference}`,
-        reference: reference,
-      }),
-    });
-
-    const data: any = await response.json();
-    if (!response.ok || !data.status) {
-      console.error('[WithdrawalService] Paystack transfer initiation failed:', data);
-      throw new Error(data.message || 'Failed to initiate Paystack transfer');
-    }
-
-    return data.data; // contains transfer_code, status, etc.
-  }
-
-  /**
-   * Creates a withdrawal request after validating business rules and executing Paystack transfer.
+   * Creates a withdrawal request after validating business rules.
+   * Debits the wallet immediately to reserve funds.
    */
   static async createWithdrawalRequest(
     userId: string,
@@ -229,163 +160,59 @@ export class WithdrawalService {
     const resolvedAccount = await this.resolveAccount(accountNumber, bankCode);
     const verifiedAccountName = resolvedAccount.accountName;
 
-    // 5. Create Paystack Transfer Recipient
-    console.log('[WithdrawalService] Creating Paystack transfer recipient...');
-    const recipient = await this.createTransferRecipient(bankCode, accountNumber, verifiedAccountName);
-    const recipientCode = recipient.recipient_code;
-
-    // 6. Generate a deterministic unique reference for the transfer
+    // 5. Generate a unique reference for the withdrawal request tracking
     const uniqueRef = `WTH-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
 
-    // 7. Execute database changes and initiate transfer
-    let withdrawalRecord;
-    try {
-      withdrawalRecord = await prisma.$transaction(async (tx) => {
-        // Debit user wallet (checks for sufficient balance)
-        try {
-          await walletService.debit(
-            userId,
-            amount,
-            TransactionType.WITHDRAWAL,
-            `Withdrawal to ${bankName} (${accountNumber})`,
-            uniqueRef,
-            tx
-          );
-        } catch (error: any) {
-          if (error.message === 'Insufficient available balance') {
-            throw new Error('Insufficient balance for this withdrawal');
-          }
-          throw error;
+    // 6. Execute database changes and reserve wallet funds
+    return await prisma.$transaction(async (tx) => {
+      // Debit user wallet (checks for sufficient balance)
+      try {
+        await walletService.debit(
+          userId,
+          amount,
+          TransactionType.WITHDRAWAL,
+          `Withdrawal Request to ${bankName} (${accountNumber})`,
+          uniqueRef,
+          tx
+        );
+      } catch (error: any) {
+        if (error.message === 'Insufficient available balance') {
+          throw new Error('Insufficient balance for this withdrawal');
         }
-
-        // Create withdrawal record with PENDING status
-        const isLargeWithdrawal = amount > LARGE_WITHDRAWAL_THRESHOLD;
-        const withdrawal = await tx.withdrawal.create({
-          data: {
-            userId,
-            amount,
-            bankName,
-            bankCode,
-            accountNumber,
-            accountName: verifiedAccountName,
-            status: WithdrawalStatus.PENDING,
-            isLargeWithdrawal,
-            recipientCode,
-          },
-        });
-
-        return withdrawal;
-      });
-    } catch (dbError: any) {
-      console.error('[WithdrawalService] DB Transaction failed during wallet debit / record creation:', dbError);
-      throw dbError;
-    }
-
-    // 8. Initiate the Paystack Transfer and process immediate responses
-    try {
-      console.log(`[WithdrawalService] Initiating transfer for withdrawal ID ${withdrawalRecord.id}...`);
-      const transfer = await this.initiateTransfer(amount, recipientCode, uniqueRef);
-      const transferCode = transfer.transfer_code;
-      const immediateStatus = transfer.status ? transfer.status.toLowerCase() : 'pending';
-
-      let finalStatus: WithdrawalStatus = WithdrawalStatus.PENDING;
-      let rejectionReason: string | null = null;
-
-      if (immediateStatus === 'success') {
-        finalStatus = WithdrawalStatus.APPROVED;
-
-        // Send notification
-        await prisma.notification.create({
-          data: {
-            userId,
-            title: 'Withdrawal Successful',
-            message: `Your withdrawal of ₦${amount.toLocaleString()} to ${bankName} has been processed successfully.`,
-          }
-        });
-      } else if (immediateStatus === 'failed' || immediateStatus === 'reversed') {
-        finalStatus = WithdrawalStatus.FAILED;
-        rejectionReason = `Immediate Paystack transfer failed: ${transfer.failures?.message || transfer.failure_reason || 'Unknown failure'}`;
-
-        // Refund wallet
-        await prisma.$transaction(async (tx) => {
-          await walletService.credit(
-            userId,
-            amount,
-            TransactionType.ADJUSTMENT,
-            `Refund: Failed withdrawal to ${bankName} (${accountNumber})`,
-            uniqueRef,
-            tx
-          );
-
-          await tx.withdrawal.update({
-            where: { id: withdrawalRecord.id },
-            data: {
-              status: WithdrawalStatus.FAILED,
-              rejectionReason,
-              transferCode,
-            },
-          });
-        });
-
-        // Send notification
-        await prisma.notification.create({
-          data: {
-            userId,
-            title: 'Withdrawal Failed',
-            message: `Your withdrawal of ₦${amount.toLocaleString()} to ${bankName} failed and has been refunded to your available balance.`,
-          }
-        });
-
-        throw new Error(`Withdrawal failed immediately: ${rejectionReason}`);
+        throw error;
       }
 
-      // Update withdrawal record with the transfer code and the determined final status
-      const updatedWithdrawal = await prisma.withdrawal.update({
-        where: { id: withdrawalRecord.id },
+      // Create withdrawal record with PENDING status
+      const isLargeWithdrawal = amount > LARGE_WITHDRAWAL_THRESHOLD;
+      const withdrawal = await tx.withdrawal.create({
         data: {
-          transferCode,
-          status: finalStatus,
-          rejectionReason,
+          userId,
+          amount,
+          bankName,
+          bankCode,
+          accountNumber,
+          accountName: verifiedAccountName,
+          status: WithdrawalStatus.PENDING,
+          isLargeWithdrawal,
         },
       });
 
-      return updatedWithdrawal;
-    } catch (paystackError: any) {
-      // If it is an immediate failure that already threw above, we don't need to roll back again.
-      if (paystackError.message && paystackError.message.includes('Withdrawal failed immediately:')) {
-        throw paystackError;
-      }
+      // Create user notification
+      const formattedAmount = amount.toLocaleString('en-NG', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
 
-      console.error('[WithdrawalService] Paystack transfer initiation failed. Rolling back...', paystackError);
+      await tx.notification.create({
+        data: {
+          userId,
+          title: 'Withdrawal Submitted',
+          message: `Your withdrawal request of ₦${formattedAmount} to ${bankName} (${accountNumber}) has been submitted for review.`,
+        }
+      });
 
-      // Rollback wallet balance and mark withdrawal as FAILED (technical failure)
-      try {
-        await prisma.$transaction(async (tx) => {
-          // Refund the wallet
-          await walletService.credit(
-            userId,
-            amount,
-            TransactionType.ADJUSTMENT,
-            `Refund: Failed withdrawal to ${bankName} (${accountNumber})`,
-            uniqueRef,
-            tx
-          );
-
-          // Update withdrawal status to FAILED
-          await tx.withdrawal.update({
-            where: { id: withdrawalRecord.id },
-            data: {
-              status: WithdrawalStatus.FAILED,
-              rejectionReason: `Paystack Transfer Failed: ${paystackError.message || 'Unknown error'}`,
-            },
-          });
-        });
-      } catch (rollbackError) {
-        console.error('[WithdrawalService] CRITICAL: Failed to rollback / refund user wallet!', rollbackError);
-      }
-
-      throw new Error(`Withdrawal failed: ${paystackError.message || 'Could not process transfer with Paystack'}`);
-    }
+      return withdrawal;
+    });
   }
 
   /**
