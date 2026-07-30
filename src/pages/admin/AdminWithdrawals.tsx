@@ -10,7 +10,9 @@ import {
   X,
   AlertTriangle,
   Search,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Upload,
+  CheckCircle
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -122,6 +124,32 @@ const AdminWithdrawals: React.FC = () => {
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
       toast.error(err.response?.data?.message || 'Action failed to execute');
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const allowedMimeTypes = [
+        'image/jpeg',
+        'image/png',
+        'image/jpg',
+        'image/webp',
+        'application/pdf',
+      ];
+
+      if (!allowedMimeTypes.includes(file.type)) {
+        toast.error('Only images (JPEG, JPG, PNG, WEBP) and PDFs are allowed');
+        return;
+      }
+
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error('File size must not exceed 10MB');
+        return;
+      }
+
+      setProofFile(file);
+      toast.success(`Selected file: ${file.name}`);
     }
   };
 
@@ -344,25 +372,34 @@ const AdminWithdrawals: React.FC = () => {
                 <div className="relative">
                   <input
                     type="file"
+                    id="admin-proof-file-input"
                     accept=".jpg,.jpeg,.png,.pdf"
-                    onChange={(e) => {
-                      if (e.target.files && e.target.files[0]) {
-                        const file = e.target.files[0];
-                        if (file.size > 10 * 1024 * 1024) {
-                          toast.error("File size must not exceed 10MB");
-                          e.target.value = "";
-                        } else {
-                          setProofFile(file);
-                        }
-                      }
-                    }}
+                    onChange={handleFileChange}
                     required
-                    className="w-full bg-white/[0.02] border border-white/[0.08] focus:border-purple-primary/50 focus:bg-white/[0.05] transition-all outline-none px-4 py-3 text-xs rounded-lg text-text-primary file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-purple-primary/20 file:text-purple-bright hover:file:bg-purple-primary/30 file:cursor-pointer"
+                    className="hidden"
                   />
+                  <label
+                    htmlFor="admin-proof-file-input"
+                    className={`w-full h-24 border border-dashed rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-white/[0.04] transition-all ${
+                      proofFile
+                        ? 'border-purple-primary/50 bg-purple-primary/5 text-white'
+                        : 'border-white/10 bg-white/[0.01] text-gray-400'
+                    }`}
+                  >
+                    {proofFile ? (
+                      <>
+                        <CheckCircle className="w-6 h-6 text-purple-primary" />
+                        <span className="text-xs font-semibold font-mono max-w-[200px] truncate">{proofFile.name}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-6 h-6 text-gray-500" />
+                        <span className="text-xs font-medium">Upload Image or PDF</span>
+                        <span className="text-[10px] text-gray-500">Max size 10MB</span>
+                      </>
+                    )}
+                  </label>
                 </div>
-                <p className="text-[9px] text-text-muted uppercase tracking-widest opacity-60">
-                  Supported formats: JPG, JPEG, PNG, PDF (Max 10MB)
-                </p>
               </div>
             )}
 
