@@ -186,9 +186,17 @@ const AdminWithdrawals: React.FC = () => {
                         </div>
                       </td>
                       <td className="p-4">
-                        <span className="text-xs text-white font-bold leading-none">
-                          ₦{Number(w.amount).toLocaleString('en-NG', { minimumFractionDigits: 2 })}
-                        </span>
+                        <div className="min-w-[120px] space-y-0.5">
+                          <p className="text-xs text-white font-bold" title="Gross Requested Amount">
+                            Gross: ₦{Number(w.amount).toLocaleString('en-NG', { minimumFractionDigits: 2 })}
+                          </p>
+                          <p className="text-[10px] text-red-400 font-medium">
+                            Fee (20%): ₦{Number(w.fee || Number(w.amount) * 0.2).toLocaleString('en-NG', { minimumFractionDigits: 2 })}
+                          </p>
+                          <p className="text-[11px] text-emerald-400 font-bold">
+                            Net: ₦{Number(w.netAmount || Number(w.amount) * 0.8).toLocaleString('en-NG', { minimumFractionDigits: 2 })}
+                          </p>
+                        </div>
                       </td>
                       <td className="p-4 text-xs font-bold text-white">
                         {w.bankName}
@@ -283,9 +291,21 @@ const AdminWithdrawals: React.FC = () => {
                 <span className="text-white font-bold truncate max-w-[200px]">{confirmDialog.withdrawal.accountName}</span>
               </div>
               <div className="flex justify-between items-center text-xs pt-2 border-t border-white/[0.04]">
-                <span className="text-text-muted font-bold uppercase tracking-wider">Payout Amount</span>
-                <span className="text-xl font-black text-white">
+                <span className="text-text-muted font-bold uppercase tracking-wider">Requested Gross</span>
+                <span className="text-white font-bold">
                   ₦{Number(confirmDialog.withdrawal.amount).toLocaleString('en-NG', { minimumFractionDigits: 2 })}
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-xs text-red-400">
+                <span className="font-bold uppercase tracking-wider">Withdrawal Fee (20%)</span>
+                <span className="font-bold">
+                  ₦{Number(confirmDialog.withdrawal.fee || Number(confirmDialog.withdrawal.amount) * 0.2).toLocaleString('en-NG', { minimumFractionDigits: 2 })}
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-xs pt-2 border-t border-white/[0.04] text-emerald-400">
+                <span className="font-black uppercase tracking-wider text-xs">Net Amount to Pay</span>
+                <span className="text-xl font-black">
+                  ₦{Number(confirmDialog.withdrawal.netAmount || Number(confirmDialog.withdrawal.amount) * 0.8).toLocaleString('en-NG', { minimumFractionDigits: 2 })}
                 </span>
               </div>
             </div>

@@ -41,6 +41,8 @@ export interface AdminWithdrawal {
   id: string;
   userId: string;
   amount: string;
+  fee?: string;
+  netAmount?: string;
   bankName: string;
   bankCode: string | null;
   accountNumber: string;

@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Withdrawal" ADD COLUMN     "fee" DECIMAL(15,2) NOT NULL DEFAULT 0,
+ADD COLUMN     "netAmount" DECIMAL(15,2) NOT NULL DEFAULT 0;

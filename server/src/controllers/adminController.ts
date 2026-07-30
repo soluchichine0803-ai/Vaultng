@@ -510,12 +510,20 @@ export class AdminController {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         });
+        const formattedFee = Number(withdrawal.fee).toLocaleString('en-NG', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
+        const formattedNetAmount = Number(withdrawal.netAmount).toLocaleString('en-NG', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
 
         await tx.notification.create({
           data: {
             userId: withdrawal.userId,
             title: 'Withdrawal Successful',
-            message: `Your withdrawal of ₦${formattedAmount} to ${withdrawal.bankName} has been processed and paid successfully.`,
+            message: `Your withdrawal of ₦${formattedAmount} (20% fee: ₦${formattedFee}, Net paid: ₦${formattedNetAmount}) to ${withdrawal.bankName} has been processed and paid successfully.`,
           }
         });
 
@@ -525,7 +533,7 @@ export class AdminController {
             adminId,
             action: 'Withdrawal Paid',
             targetUser: withdrawal.userId,
-            details: `Marked withdrawal of ₦${formattedAmount} to ${withdrawal.bankName} as PAID (ID: ${withdrawal.id})`,
+            details: `Marked withdrawal of ₦${formattedAmount} (Fee: ₦${formattedFee}, Net: ₦${formattedNetAmount}) to ${withdrawal.bankName} as PAID (ID: ${withdrawal.id})`,
           }
         });
 

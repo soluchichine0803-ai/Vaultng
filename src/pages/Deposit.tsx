@@ -199,9 +199,9 @@ const Deposit: React.FC = () => {
                 <div className="text-xs text-gray-400 space-y-1.5">
                   <p>Kindly transfer exactly <span className="text-white font-bold">₦{amount ? Number(amount).toLocaleString() : '0.00'}</span> to:</p>
                   <div className="bg-black/40 p-2.5 rounded-lg border border-white/5 space-y-1">
-                    <p>Bank: <span className="text-text-secondary font-mono font-bold">VaultNG Trust Bank</span></p>
-                    <p>Account Name: <span className="text-text-secondary font-mono font-bold">VaultNG Operations</span></p>
-                    <p>Account Number: <span className="text-text-secondary font-mono font-bold">1029384756</span></p>
+                    <p>Bank: <span className="text-text-secondary font-mono font-bold">Keystone Bank</span></p>
+                    <p>Account Name: <span className="text-text-secondary font-mono font-bold">Ogbonna Ifeanyi Emmanuel</span></p>
+                    <p>Account Number: <span className="text-text-secondary font-mono font-bold">6071603476</span></p>
                   </div>
                 </div>
                 <p className="text-[10px] text-gray-500 leading-tight">
