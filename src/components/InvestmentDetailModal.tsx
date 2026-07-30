@@ -21,7 +21,7 @@ const InvestmentDetailModal: React.FC<InvestmentDetailModalProps> = ({ isOpen, o
     CANCELLED: { label: 'Cancelled', variant: 'danger' as const },
   };
 
-  const status = statusMap[investment.status] || { label: investment.status, variant: 'default' as const };
+  const status = statusMap[investment.status] || { label: investment.status, variant: 'info' as const };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Investment Details">
