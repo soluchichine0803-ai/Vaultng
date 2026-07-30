@@ -49,11 +49,8 @@ export const createInvestment = async (req: AuthRequest, res: Response) => {
     }
 
     // Calculate expected profit and maturity date
-    // Monthly ROI 30%. Expected profit is based on monthly rate for the total duration.
-    // Package A: 60 days (2 months) -> 60% total profit
-    // Package B: 90 days (3 months) -> 90% total profit
-    const months = plan.durationHours / (30 * 24);
-    const totalRoiPercent = Number(plan.roiPercent) * months;
+    // Each package has a fixed 60% ROI at maturity as defined in plan.roiPercent
+    const totalRoiPercent = Number(plan.roiPercent);
     const expectedProfit = investmentAmount * (totalRoiPercent / 100);
 
     const maturityDate = new Date();

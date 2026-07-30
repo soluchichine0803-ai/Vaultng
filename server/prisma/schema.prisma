@@ -183,6 +183,8 @@ model Withdrawal {
   id              String           @id @default(uuid())
   userId          String
   amount          Decimal          @db.Decimal(15, 2)
+  fee             Decimal          @default(0) @db.Decimal(15, 2)
+  netAmount       Decimal          @default(0) @db.Decimal(15, 2)
   bankName        String
   bankCode        String?
   accountNumber   String

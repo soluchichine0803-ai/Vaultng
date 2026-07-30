@@ -199,6 +199,23 @@ const Withdraw: React.FC = () => {
               className="no-spinner"
             />
 
+            {withdrawalAmount > 0 && (
+              <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.05] space-y-2 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-text-muted">Requested Amount</span>
+                  <span className="text-white font-mono font-bold">₦{withdrawalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-text-muted">Withdrawal Charge (20%)</span>
+                  <span className="text-danger font-mono font-bold">- ₦{(withdrawalAmount * 0.2).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </div>
+                <div className="flex justify-between pt-2 border-t border-white/[0.04] text-sm">
+                  <span className="text-text-muted font-bold">Net Amount to Pay</span>
+                  <span className="text-success font-mono font-black">₦{(withdrawalAmount * 0.8).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </div>
+              </div>
+            )}
+
             {/* Searchable Bank Dropdown */}
             <div className="relative space-y-1.5">
               <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider ml-1">
@@ -379,7 +396,10 @@ const Withdraw: React.FC = () => {
                             </div>
                           </td>
                           <td className="px-6 py-4 text-right">
-                            <p className="text-sm font-bold text-white">{formatCurrency(w.amount)}</p>
+                            <div className="space-y-0.5">
+                              <p className="text-sm font-bold text-white" title="Requested Amount">{formatCurrency(w.amount)}</p>
+                              <p className="text-[10px] text-text-muted" title="Net Paid Amount">Net: {formatCurrency(Number(w.netAmount) > 0 ? Number(w.netAmount) : w.amount * 0.8)}</p>
+                            </div>
                           </td>
                         </tr>
                       );

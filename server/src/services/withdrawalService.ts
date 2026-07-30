@@ -159,6 +159,10 @@ export class WithdrawalService {
     // 5. Generate a unique reference for the withdrawal request tracking
     const uniqueRef = `WTH-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
 
+    // Calculate 20% fee and net amount
+    const fee = amount * 0.20;
+    const netAmount = amount - fee;
+
     // 6. Execute database changes and reserve wallet funds
     return await prisma.$transaction(async (tx) => {
       // Debit user wallet (checks for sufficient balance)
@@ -184,6 +188,8 @@ export class WithdrawalService {
         data: {
           userId,
           amount,
+          fee,
+          netAmount,
           bankName,
           bankCode,
           accountNumber,
@@ -198,12 +204,20 @@ export class WithdrawalService {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       });
+      const formattedFee = fee.toLocaleString('en-NG', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+      const formattedNetAmount = netAmount.toLocaleString('en-NG', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
 
       await tx.notification.create({
         data: {
           userId,
           title: 'Withdrawal Submitted',
-          message: `Your withdrawal request of ₦${formattedAmount} to ${bankName} (${accountNumber}) has been submitted for review.`,
+          message: `Your withdrawal request of ₦${formattedAmount} (20% fee: ₦${formattedFee}, Net: ₦${formattedNetAmount}) to ${bankName} (${accountNumber}) has been submitted for review.`,
         }
       });
 

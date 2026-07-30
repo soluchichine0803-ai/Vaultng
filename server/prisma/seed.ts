@@ -32,22 +32,40 @@ async function main() {
   // 2. Investment Plans
   const supportedPlans = [
     {
-      id: 'plan-package-a',
-      name: 'Package A',
+      id: 'plan-copper',
+      name: 'COPPER',
       minAmount: 3000,
-      maxAmount: 50000,
-      roiPercent: 30,
-      durationHours: 60 * 24, // 60 Days
+      maxAmount: 6000,
+      roiPercent: 60,
+      durationHours: 30 * 24, // 30 Days
       displayOrder: 1
     },
     {
-      id: 'plan-package-b',
-      name: 'Package B',
-      minAmount: 51000,
-      maxAmount: 1000000,
-      roiPercent: 30,
-      durationHours: 90 * 24, // 90 Days
+      id: 'plan-bronze',
+      name: 'BRONZE',
+      minAmount: 10000,
+      maxAmount: 50000,
+      roiPercent: 60,
+      durationHours: 60 * 24, // 60 Days
       displayOrder: 2
+    },
+    {
+      id: 'plan-silver',
+      name: 'SILVER',
+      minAmount: 100000,
+      maxAmount: 250000,
+      roiPercent: 60,
+      durationHours: 90 * 24, // 90 Days
+      displayOrder: 3
+    },
+    {
+      id: 'plan-gold',
+      name: 'GOLD',
+      minAmount: 500000,
+      maxAmount: 1000000,
+      roiPercent: 60,
+      durationHours: 120 * 24, // 120 Days
+      displayOrder: 4
     },
   ];
 
