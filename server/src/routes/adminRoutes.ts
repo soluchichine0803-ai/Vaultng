@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { AdminController } from '../controllers/adminController';
 import { authenticate, authorize } from '../middleware/authMiddleware';
+import { upload } from '../middleware/uploadMiddleware';
 
 const router = Router();
 
@@ -14,7 +15,7 @@ router.get('/transactions', AdminController.getTransactionsTimeline);
 
 router.put('/deposits/:id/approve', AdminController.approveDeposit);
 router.put('/deposits/:id/reverse', AdminController.reverseDeposit);
-router.put('/withdrawals/:id/pay', AdminController.payWithdrawal);
+router.put('/withdrawals/:id/pay', upload.single('proofOfPayment'), AdminController.payWithdrawal);
 router.put('/withdrawals/:id/fail', AdminController.failWithdrawal);
 
 export default router;

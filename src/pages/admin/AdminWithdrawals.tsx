@@ -35,6 +35,8 @@ const AdminWithdrawals: React.FC = () => {
     reason: '',
   });
 
+  const [proofFile, setProofFile] = useState<File | null>(null);
+
   const fetchWithdrawals = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -76,6 +78,7 @@ const AdminWithdrawals: React.FC = () => {
       withdrawal,
       reason: '',
     });
+    setProofFile(null);
   };
 
   const handleCloseConfirm = () => {
@@ -85,6 +88,7 @@ const AdminWithdrawals: React.FC = () => {
       withdrawal: null,
       reason: '',
     });
+    setProofFile(null);
   };
 
   const handleActionSubmit = async () => {
@@ -96,9 +100,18 @@ const AdminWithdrawals: React.FC = () => {
       return;
     }
 
+    if (type === 'PAY' && !proofFile) {
+      toast.error('Proof of payment file is required');
+      return;
+    }
+
     try {
       if (type === 'PAY') {
-        await adminService.payWithdrawal(withdrawal.id);
+        const formData = new FormData();
+        if (proofFile) {
+          formData.append('proofOfPayment', proofFile);
+        }
+        await adminService.payWithdrawal(withdrawal.id, formData);
         toast.success(`Withdrawal marked as PAID successfully`);
       } else {
         await adminService.failWithdrawal(withdrawal.id, reason.trim());
@@ -323,6 +336,36 @@ const AdminWithdrawals: React.FC = () => {
               </div>
             )}
 
+            {confirmDialog.type === 'PAY' && (
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-wider text-text-muted block">
+                  Proof of Payment (Required)
+                </label>
+                <div className="relative">
+                  <input
+                    type="file"
+                    accept=".jpg,.jpeg,.png,.pdf"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        const file = e.target.files[0];
+                        if (file.size > 10 * 1024 * 1024) {
+                          toast.error("File size must not exceed 10MB");
+                          e.target.value = "";
+                        } else {
+                          setProofFile(file);
+                        }
+                      }
+                    }}
+                    required
+                    className="w-full bg-white/[0.02] border border-white/[0.08] focus:border-purple-primary/50 focus:bg-white/[0.05] transition-all outline-none px-4 py-3 text-xs rounded-lg text-text-primary file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-purple-primary/20 file:text-purple-bright hover:file:bg-purple-primary/30 file:cursor-pointer"
+                  />
+                </div>
+                <p className="text-[9px] text-text-muted uppercase tracking-widest opacity-60">
+                  Supported formats: JPG, JPEG, PNG, PDF (Max 10MB)
+                </p>
+              </div>
+            )}
+
             <div className="flex items-center gap-3">
               <Button
                 variant="secondary"
@@ -333,6 +376,7 @@ const AdminWithdrawals: React.FC = () => {
               </Button>
               <Button
                 onClick={handleActionSubmit}
+                disabled={confirmDialog.type === 'PAY' && !proofFile}
                 className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest ${
                   confirmDialog.type === 'PAY' ? 'bg-emerald-500 hover:bg-emerald-400' : 'bg-red-500 hover:bg-red-400'
                 }`}

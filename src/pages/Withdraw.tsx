@@ -132,6 +132,12 @@ const Withdraw: React.FC = () => {
     }
   };
 
+  const getFileUrl = (pathStr: string) => {
+    const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    const backendBase = apiBase.replace('/api', '');
+    return `${backendBase}${pathStr}`;
+  };
+
   const filteredBanks = banks.filter(b =>
     b.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -372,15 +378,27 @@ const Withdraw: React.FC = () => {
                             </div>
                           </td>
                           <td className="px-6 py-4">
-                            <div className="flex items-center gap-2">
-                              {getStatusIcon(w.status)}
-                              <span className={`text-[10px] font-black uppercase tracking-widest ${
-                                w.status === 'APPROVED' || w.status === 'PAID' ? 'text-success' :
-                                  w.status === 'REJECTED' || w.status === 'FAILED' ? 'text-danger' :
-                                'text-purple-soft'
-                              }`}>
-                                {w.status}
-                              </span>
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                {getStatusIcon(w.status)}
+                                <span className={`text-[10px] font-black uppercase tracking-widest ${
+                                  w.status === 'APPROVED' || w.status === 'PAID' ? 'text-success' :
+                                    w.status === 'REJECTED' || w.status === 'FAILED' ? 'text-danger' :
+                                  'text-purple-soft'
+                                }`}>
+                                  {w.status}
+                                </span>
+                              </div>
+                              {w.status === 'PAID' && w.proofOfPaymentUrl && (
+                                <a
+                                  href={getFileUrl(w.proofOfPaymentUrl)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-block text-[10px] font-bold text-purple-soft hover:text-white hover:underline transition-colors mt-0.5"
+                                >
+                                  View Proof
+                                </a>
+                              )}
                             </div>
                           </td>
                           <td className="px-6 py-4 text-right">
