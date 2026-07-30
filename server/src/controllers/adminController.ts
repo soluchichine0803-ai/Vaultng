@@ -49,6 +49,8 @@ export class AdminController {
 
       const processedActivity = recentActivity.map((log) => {
         let details = log.details;
+
+        // Replace target user UUID with username
         if (log.targetUser && log.target?.username) {
           const userUuid = log.targetUser;
           const username = log.target.username;
@@ -65,6 +67,12 @@ export class AdminController {
             details = details.replace(uuidPattern, username);
           }
         }
+
+        // Remove transaction/withdrawal ID patterns (e.g. " (ID: <uuid>)" or " ID: <uuid>")
+        const idPattern = /\s*\(\s*ID:\s*[a-f0-9-]{36}\s*\)/gi;
+        const rawIdPattern = /\s*ID:\s*[a-f0-9-]{36}/gi;
+        details = details.replace(idPattern, '').replace(rawIdPattern, '');
+
         return {
           ...log,
           details
