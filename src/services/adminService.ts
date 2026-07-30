@@ -100,8 +100,12 @@ export const adminService = {
     await api.put(`/admin/deposits/${id}/reverse`, { rejectionReason });
   },
 
-  payWithdrawal: async (id: string): Promise<void> => {
-    await api.put(`/admin/withdrawals/${id}/pay`);
+  payWithdrawal: async (id: string, formData: FormData): Promise<void> => {
+    await api.put(`/admin/withdrawals/${id}/pay`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
   },
 
   failWithdrawal: async (id: string, rejectionReason: string): Promise<void> => {

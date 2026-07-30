@@ -484,6 +484,12 @@ export class AdminController {
         return res.status(400).json({ message: `Withdrawal is already in ${withdrawal.status} state` });
       }
 
+      if (!req.file) {
+        return res.status(400).json({ message: 'Proof of payment is required' });
+      }
+
+      const proofOfPaymentUrl = `/uploads/${req.file.filename}`;
+
       // Process payout atomically
       const updatedWithdrawal = await prisma.$transaction(async (tx) => {
         // Double-check status inside tx
@@ -502,6 +508,7 @@ export class AdminController {
             status: WithdrawalStatus.PAID,
             approvedBy: adminId,
             completionDate: new Date(),
+            proofOfPaymentUrl,
           }
         });
 

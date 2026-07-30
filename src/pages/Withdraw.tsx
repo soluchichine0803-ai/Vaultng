@@ -10,11 +10,12 @@ import { withdrawalService } from '../services/withdrawalService';
 import { toast } from 'react-hot-toast';
 import { AlertCircle, Clock, Calendar, History, CheckCircle2, XCircle, Timer } from 'lucide-react';
 import { formatCurrency } from '../utils/formatters';
+import { NIGERIAN_BANKS } from '../utils/banks';
 
 const Withdraw: React.FC = () => {
   const { user, fetchUser } = useAuthStore();
   const [amount, setAmount] = useState('');
-  const [banks, setBanks] = useState<any[]>([]);
+  const [banks] = useState<any[]>(NIGERIAN_BANKS);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedBankCode, setSelectedBankCode] = useState('');
   const [selectedBankName, setSelectedBankName] = useState('');
@@ -41,18 +42,8 @@ const Withdraw: React.FC = () => {
     }
   };
 
-  // 2. Fetch Bank List
+  // 2. Fetch History on mount
   useEffect(() => {
-    const fetchBanks = async () => {
-      try {
-        const banksList = await withdrawalService.getBanks();
-        setBanks(banksList);
-      } catch (error) {
-        console.error('Failed to fetch banks list', error);
-      }
-    };
-
-    fetchBanks();
     fetchHistory();
   }, []);
 
@@ -99,11 +90,13 @@ const Withdraw: React.FC = () => {
   };
 
   const eligibilityError = getEligibilityError();
+  const amountNum = Number(amount);
+  const isAmountInvalid = !amount || isNaN(amountNum) || amountNum <= 0;
+
   const isSubmitDisabled =
-    !!eligibilityError ||
-    !amount ||
+    isAmountInvalid ||
     !selectedBankCode ||
-    accountNumber.length !== 10 ||
+    !accountNumber ||
     !accountName.trim() ||
     isLoading;
 
@@ -112,11 +105,6 @@ const Withdraw: React.FC = () => {
 
     if (!amount || !selectedBankCode || !accountNumber || !accountName.trim()) {
       toast.error('Please fill in all fields');
-      return;
-    }
-
-    if (eligibilityError) {
-      toast.error(eligibilityError);
       return;
     }
 
@@ -142,6 +130,12 @@ const Withdraw: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const getFileUrl = (pathStr: string) => {
+    const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    const backendBase = apiBase.replace('/api', '');
+    return `${backendBase}${pathStr}`;
   };
 
   const filteredBanks = banks.filter(b =>
@@ -384,15 +378,27 @@ const Withdraw: React.FC = () => {
                             </div>
                           </td>
                           <td className="px-6 py-4">
-                            <div className="flex items-center gap-2">
-                              {getStatusIcon(w.status)}
-                              <span className={`text-[10px] font-black uppercase tracking-widest ${
-                                w.status === 'APPROVED' || w.status === 'PAID' ? 'text-success' :
-                                  w.status === 'REJECTED' || w.status === 'FAILED' ? 'text-danger' :
-                                'text-purple-soft'
-                              }`}>
-                                {w.status}
-                              </span>
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                {getStatusIcon(w.status)}
+                                <span className={`text-[10px] font-black uppercase tracking-widest ${
+                                  w.status === 'APPROVED' || w.status === 'PAID' ? 'text-success' :
+                                    w.status === 'REJECTED' || w.status === 'FAILED' ? 'text-danger' :
+                                  'text-purple-soft'
+                                }`}>
+                                  {w.status}
+                                </span>
+                              </div>
+                              {w.status === 'PAID' && w.proofOfPaymentUrl && (
+                                <a
+                                  href={getFileUrl(w.proofOfPaymentUrl)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-block text-[10px] font-bold text-purple-soft hover:text-white hover:underline transition-colors mt-0.5"
+                                >
+                                  View Proof
+                                </a>
+                              )}
                             </div>
                           </td>
                           <td className="px-6 py-4 text-right">

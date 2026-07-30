@@ -13,45 +13,29 @@ const LARGE_WITHDRAWAL_THRESHOLD = 100000;
 
 export class WithdrawalService {
   /**
-   * Fetches supported Nigerian banks from Paystack, using an in-memory cache.
+   * Fetches supported Nigerian banks, returning a static local dataset to remain completely independent of Paystack.
    */
   static async getBanks() {
-    const secretKey = process.env.PAYSTACK_SECRET_KEY;
-    if (!secretKey) {
-      throw new Error('PAYSTACK_SECRET_KEY is not configured');
-    }
-
-    if (banksCache && (Date.now() - banksCache.fetchedAt < CACHE_TTL_MS)) {
-      console.log('[WithdrawalService] Returning cached banks');
-      return banksCache.banks;
-    }
-
-    console.log('[WithdrawalService] Fetching banks from Paystack');
-    const response = await fetch('https://api.paystack.co/bank?country=nigeria', {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${secretKey}`,
-      },
-    });
-
-    const data: any = await response.json();
-    if (!response.ok || !data.status) {
-      console.error('[WithdrawalService] Paystack bank fetch failed:', data);
-      throw new Error(data.message || 'Failed to fetch banks from Paystack');
-    }
-
-    // Map to friendly names and codes
-    const banks = data.data.map((b: any) => ({
-      name: b.name,
-      code: b.code,
-    }));
-
-    banksCache = {
-      banks,
-      fetchedAt: Date.now(),
-    };
-
-    return banks;
+    return [
+      { name: 'Access Bank', code: '044' },
+      { name: 'Ecobank Nigeria', code: '050' },
+      { name: 'Fidelity Bank', code: '070' },
+      { name: 'First Bank of Nigeria', code: '011' },
+      { name: 'First City Monument Bank (FCMB)', code: '214' },
+      { name: 'Guaranty Trust Bank (GTBank)', code: '058' },
+      { name: 'Keystone Bank', code: '082' },
+      { name: 'Moniepoint MFB', code: '50515' },
+      { name: 'OPay Digital Services (OPay)', code: '999992' },
+      { name: 'PalmPay', code: '999991' },
+      { name: 'Polaris Bank', code: '076' },
+      { name: 'Providus Bank', code: '101' },
+      { name: 'Stanbic IBTC Bank', code: '039' },
+      { name: 'Sterling Bank', code: '050' },
+      { name: 'Union Bank of Nigeria', code: '032' },
+      { name: 'United Bank for Africa (UBA)', code: '033' },
+      { name: 'Wema Bank', code: '035' },
+      { name: 'Zenith Bank', code: '057' }
+    ];
   }
 
   /**
