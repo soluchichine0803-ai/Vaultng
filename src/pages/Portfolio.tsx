@@ -115,7 +115,7 @@ const Portfolio: React.FC = () => {
               COMPLETED: { label: 'Matured', variant: 'success' as const },
               CANCELLED: { label: 'Cancelled', variant: 'danger' as const },
             };
-            const status = statusMap[inv.status] || { label: inv.status, variant: 'default' as const };
+            const status = statusMap[inv.status] || { label: inv.status, variant: 'info' as const };
 
             return (
               <Card key={inv.id} className="p-5 lg:p-6 border-white/[0.02] hover:border-white/[0.06] transition-colors group">

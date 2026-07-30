@@ -47,6 +47,30 @@ export class AdminController {
         }
       });
 
+      const processedActivity = recentActivity.map((log) => {
+        let details = log.details;
+        if (log.targetUser && log.target?.username) {
+          const userUuid = log.targetUser;
+          const username = log.target.username;
+
+          const forUserPattern = new RegExp(`for\\s+user\\s+${userUuid}`, 'gi');
+          const userPattern = new RegExp(`user\\s+${userUuid}`, 'gi');
+          const uuidPattern = new RegExp(userUuid, 'gi');
+
+          if (forUserPattern.test(details)) {
+            details = details.replace(forUserPattern, `for ${username}`);
+          } else if (userPattern.test(details)) {
+            details = details.replace(userPattern, username);
+          } else {
+            details = details.replace(uuidPattern, username);
+          }
+        }
+        return {
+          ...log,
+          details
+        };
+      });
+
       return res.status(200).json({
         status: 'success',
         data: {
@@ -54,7 +78,7 @@ export class AdminController {
           pendingWithdrawals: pendingWithdrawalsCount,
           depositsTodayAmount: Number(depositsToday._sum.amount || 0),
           withdrawalsTodayAmount: Number(withdrawalsToday._sum.amount || 0),
-          recentActivity
+          recentActivity: processedActivity
         }
       });
     } catch (error: any) {
