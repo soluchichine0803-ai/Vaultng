@@ -2,7 +2,7 @@ import type { Response } from 'express';
 import { authService } from '../services/authService';
 import type { AuthRequest } from '../types/auth';
 import { walletService } from '../services/walletService';
-import { TransactionType } from '@prisma/client';
+import { TransactionType, UserRole } from '@prisma/client';
 import prisma from '../utils/prisma';
 
 const formatUserResponse = (user: any) => {
@@ -81,47 +81,50 @@ export const login = async (req: AuthRequest, res: Response) => {
     let updatedUser = user;
     const now = new Date();
 
-    // Get current date string in Africa/Lagos
-    const lagosFormatter = new Intl.DateTimeFormat('en-GB', {
-      timeZone: 'Africa/Lagos',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    });
-    const currentLagosDate = lagosFormatter.format(now);
+    // If the user's role is not ADMIN, process daily login bonus flow
+    if (user.role !== UserRole.ADMIN) {
+      // Get current date string in Africa/Lagos
+      const lagosFormatter = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Africa/Lagos',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      });
+      const currentLagosDate = lagosFormatter.format(now);
 
-    const lastBonus = user.lastLoginBonusAt ? new Date(user.lastLoginBonusAt) : null;
-    const lastBonusLagosDate = lastBonus ? lagosFormatter.format(lastBonus) : null;
+      const lastBonus = user.lastLoginBonusAt ? new Date(user.lastLoginBonusAt) : null;
+      const lastBonusLagosDate = lastBonus ? lagosFormatter.format(lastBonus) : null;
 
-    if (!lastBonusLagosDate || lastBonusLagosDate !== currentLagosDate) {
-      try {
-        updatedUser = await prisma.$transaction(async (tx) => {
-          // Double check within transaction
-          const currentUser = await tx.user.findUnique({ where: { id: user.id } });
-          const currentLastBonus = currentUser?.lastLoginBonusAt ? new Date(currentUser.lastLoginBonusAt) : null;
-          const currentLastBonusLagosDate = currentLastBonus ? lagosFormatter.format(currentLastBonus) : null;
+      if (!lastBonusLagosDate || lastBonusLagosDate !== currentLagosDate) {
+        try {
+          updatedUser = await prisma.$transaction(async (tx) => {
+            // Double check within transaction
+            const currentUser = await tx.user.findUnique({ where: { id: user.id } });
+            const currentLastBonus = currentUser?.lastLoginBonusAt ? new Date(currentUser.lastLoginBonusAt) : null;
+            const currentLastBonusLagosDate = currentLastBonus ? lagosFormatter.format(currentLastBonus) : null;
 
-          if (!currentLastBonusLagosDate || currentLastBonusLagosDate !== currentLagosDate) {
-            await walletService.credit(
-              user.id,
-              100,
-              TransactionType.ADJUSTMENT, // Or a more specific type if we add one, but instructions said Record Transaction
-              'Daily login reward',
-              'DAILY_LOGIN_BONUS',
-              tx
-            );
+            if (!currentLastBonusLagosDate || currentLastBonusLagosDate !== currentLagosDate) {
+              await walletService.credit(
+                user.id,
+                100,
+                TransactionType.ADJUSTMENT, // Or a more specific type if we add one, but instructions said Record Transaction
+                'Daily login reward',
+                'DAILY_LOGIN_BONUS',
+                tx
+              );
 
-            return await tx.user.update({
-              where: { id: user.id },
-              data: { lastLoginBonusAt: now }
-            });
-          }
-          if (!currentUser) throw new Error('User not found');
-          return currentUser;
-        });
-      } catch (err) {
-        console.error('Error awarding daily login bonus:', err);
-        // We don't fail the login if the bonus fails
+              return await tx.user.update({
+                where: { id: user.id },
+                data: { lastLoginBonusAt: now }
+              });
+            }
+            if (!currentUser) throw new Error('User not found');
+            return currentUser;
+          });
+        } catch (err) {
+          console.error('Error awarding daily login bonus:', err);
+          // We don't fail the login if the bonus fails
+        }
       }
     }
 
