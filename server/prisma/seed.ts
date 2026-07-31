@@ -13,13 +13,13 @@ async function main() {
   const admin = await prisma.user.upsert({
     where: { username: 'admin' },
     update: {
-      email: 'admin@platform.com',
+      email: 'admin@vault-ng.com',
       passwordHash: hashedPassword,
       role: UserRole.ADMIN,
     },
     create: {
       username: 'admin',
-      email: 'admin@platform.com',
+      email: 'admin@vault-ng.com',
       passwordHash: hashedPassword,
       role: UserRole.ADMIN,
       referralCode: 'ADMINREF',
@@ -27,7 +27,7 @@ async function main() {
       lockedBalance: 0,
     },
   });
-  console.log('Admin user created/verified with credentials: admin@platform.com / admin');
+  console.log('Admin user created/verified with credentials: admin@vault-ng.com / admin');
 
   // 2. Investment Plans
   const supportedPlans = [
