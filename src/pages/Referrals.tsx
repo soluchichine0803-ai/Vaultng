@@ -29,8 +29,8 @@ const Referrals: React.FC = () => {
   const [team, setTeam] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Updated link format as per Phase 10 requirements
-  const referralLink = `${window.location.origin}/register?ref=${user?.referralCode || ''}`;
+  // Updated link format to always use production domain: https://vaultng.com
+  const referralLink = `https://vaultng.com/register?ref=${user?.referralCode || ''}`;
 
   const copyLink = () => {
     navigator.clipboard.writeText(referralLink);
@@ -99,7 +99,7 @@ const Referrals: React.FC = () => {
 
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex-1 bg-white/[0.02] border border-white/[0.05] rounded-lg px-4 py-4 text-xs lg:text-sm font-mono text-purple-soft overflow-hidden whitespace-nowrap flex items-center">
-            {window.location.origin}/register?ref={user?.referralCode}
+            vaultng.com/register?ref={user?.referralCode}
           </div>
 
           <Button

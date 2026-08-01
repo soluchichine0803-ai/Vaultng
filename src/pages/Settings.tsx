@@ -24,7 +24,7 @@ const Settings: React.FC = () => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  const SUPPORT_NUMBER = '2348081670463';
+  const SUPPORT_NUMBER = '2349049804438';
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
