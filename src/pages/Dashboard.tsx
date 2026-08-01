@@ -55,7 +55,7 @@ const Dashboard: React.FC = () => {
   const [selectedInvestment, setSelectedInvestment] = useState<Investment | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
-  const referralUrl = `https://vaultng.com/ref/${user?.referralCode || ''}`;
+  const referralUrl = `https://vault-ng.com/register?ref=${user?.referralCode || ''}`;
 
   const fetchPlans = async () => {
     try {
@@ -315,7 +315,7 @@ const Dashboard: React.FC = () => {
             </div>
             <div className="space-y-0.5">
               <div className="flex items-baseline gap-1.5">
-                <span className="text-base lg:text-lg font-bold text-white tracking-tight break-all">vaultng.com/ref/{user?.referralCode}</span>
+                <span className="text-base lg:text-lg font-bold text-white tracking-tight break-all">vault-ng.com/register?ref={user?.referralCode}</span>
               </div>
               <p className="text-[9px] font-bold text-text-muted uppercase tracking-tighter opacity-60">Earn commissions for every referral</p>
             </div>
