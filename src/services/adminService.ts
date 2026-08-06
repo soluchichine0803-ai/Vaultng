@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import api from '../lib/api';
 
 export interface AdminDashboardStats {
@@ -69,6 +70,21 @@ export interface AdminTimelineItem {
 }
 
 export const adminService = {
+  getUsers: async (): Promise<any[]> => {
+    const response = await api.get('/admin/users');
+    return response.data.data;
+  },
+
+  getUserProfile: async (id: string): Promise<any> => {
+    const response = await api.get(`/admin/users/${id}`);
+    return response.data.data;
+  },
+
+  resetUserPassword: async (id: string): Promise<{ temporaryPassword: string }> => {
+    const response = await api.post(`/admin/users/${id}/reset-password`);
+    return response.data.data;
+  },
+
   getDashboardStats: async (): Promise<AdminDashboardStats> => {
     const response = await api.get('/admin/dashboard-stats');
     return response.data.data;

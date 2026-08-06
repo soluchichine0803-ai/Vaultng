@@ -32,7 +32,7 @@ export const authService = {
     return response.data.data.user;
   },
 
-  changePassword: async (data: { currentPassword: string, newPassword: string }): Promise<void> => {
+  changePassword: async (data: { currentPassword?: string, newPassword: string }): Promise<void> => {
     await api.patch('/auth/change-password', data);
   },
 };

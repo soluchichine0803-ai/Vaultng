@@ -29,6 +29,10 @@ const ProtectedAdminRoute: React.FC<ProtectedAdminRouteProps> = ({ children }) =
     return <Navigate to="/dashboard" replace />;
   }
 
+  if (user?.mustChangePassword && location.pathname !== '/change-password') {
+    return <Navigate to="/change-password" replace />;
+  }
+
   return <>{children}</>;
 };
 

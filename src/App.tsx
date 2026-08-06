@@ -14,6 +14,7 @@ import ReferralRedirect from './pages/ReferralRedirect';
 import Notifications from './pages/Notifications';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
+import ChangePassword from './pages/ChangePassword';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import GuestRoute from './components/auth/GuestRoute';
 import ProtectedAdminRoute from './components/auth/ProtectedAdminRoute';
@@ -22,6 +23,8 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminDeposits from './pages/admin/AdminDeposits';
 import AdminWithdrawals from './pages/admin/AdminWithdrawals';
 import AdminTransactions from './pages/admin/AdminTransactions';
+import AdminUsers from './pages/admin/AdminUsers';
+import AdminUserProfile from './pages/admin/AdminUserProfile';
 
 function App() {
   return (
@@ -47,6 +50,16 @@ function App() {
         <Route path="/ref/:referralCode" element={<ReferralRedirect />} />
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
+
+        {/* Force Password Change Route */}
+        <Route
+          path="/change-password"
+          element={
+            <ProtectedRoute>
+              <ChangePassword />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Protected Routes (Under AppLayout) */}
         <Route
@@ -79,6 +92,8 @@ function App() {
           }
         >
           <Route index element={<AdminDashboard />} />
+          <Route path="users" element={<AdminUsers />} />
+          <Route path="users/:id" element={<AdminUserProfile />} />
           <Route path="deposits" element={<AdminDeposits />} />
           <Route path="withdrawals" element={<AdminWithdrawals />} />
           <Route path="transactions" element={<AdminTransactions />} />

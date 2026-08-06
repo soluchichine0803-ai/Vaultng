@@ -13,6 +13,10 @@ router.get('/deposits', AdminController.getDeposits);
 router.get('/withdrawals', AdminController.getWithdrawals);
 router.get('/transactions', AdminController.getTransactionsTimeline);
 
+router.get('/users', AdminController.getUsers);
+router.get('/users/:id', AdminController.getUserProfile);
+router.post('/users/:id/reset-password', AdminController.resetUserPassword);
+
 router.put('/deposits/:id/approve', AdminController.approveDeposit);
 router.put('/deposits/:id/reverse', AdminController.reverseDeposit);
 router.put('/withdrawals/:id/pay', upload.single('proofOfPayment'), AdminController.payWithdrawal);
