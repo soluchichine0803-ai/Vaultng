@@ -150,12 +150,16 @@ export const authService = {
     });
   },
 
-  changePassword: async (userId: string, data: { currentPassword: string, newPassword: string }) => {
+  changePassword: async (userId: string, data: { currentPassword?: string, newPassword: string }) => {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new Error('User not found');
 
-    const isPasswordValid = await bcrypt.compare(data.currentPassword, user.passwordHash);
-    if (!isPasswordValid) throw new Error('Invalid current password');
+    // Only verify current password if the change is not mandatory
+    if (!user.mustChangePassword) {
+      if (!data.currentPassword) throw new Error('Current password is required');
+      const isPasswordValid = await bcrypt.compare(data.currentPassword, user.passwordHash);
+      if (!isPasswordValid) throw new Error('Invalid current password');
+    }
 
     const newPasswordHash = await bcrypt.hash(data.newPassword, 10);
     return prisma.user.update({

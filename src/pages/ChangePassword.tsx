@@ -16,7 +16,6 @@ const ChangePassword: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const [formData, setFormData] = useState({
-    currentPassword: '',
     newPassword: '',
     confirmPassword: '',
   });
@@ -40,9 +39,6 @@ const ChangePassword: React.FC = () => {
 
   const validate = () => {
     const errors: Record<string, string> = {};
-    if (!formData.currentPassword) {
-      errors.currentPassword = 'Temporary password is required';
-    }
     if (!formData.newPassword) {
       errors.newPassword = 'New password is required';
     } else if (formData.newPassword.length < 6) {
@@ -62,7 +58,6 @@ const ChangePassword: React.FC = () => {
     try {
       setIsLoading(true);
       await authService.changePassword({
-        currentPassword: formData.currentPassword,
         newPassword: formData.newPassword,
       });
 
@@ -108,17 +103,6 @@ const ChangePassword: React.FC = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            label="Temporary Password"
-            name="currentPassword"
-            type="password"
-            placeholder="••••••••••••"
-            value={formData.currentPassword}
-            onChange={handleInputChange}
-            error={validationErrors.currentPassword}
-            required
-          />
-
           <Input
             label="New Secure Password"
             name="newPassword"

@@ -609,14 +609,24 @@ const AdminUserProfile: React.FC = () => {
               </p>
             </div>
 
-            {/* Display Box */}
-            <div className="p-4 bg-white/[0.03] border border-white/[0.06] rounded-xl text-center select-all cursor-pointer group hover:bg-white/[0.05] transition-colors relative">
-              <p className="text-lg font-mono font-bold tracking-wider text-purple-bright">
-                {generatedTempPassword}
-              </p>
-              <span className="absolute right-2.5 bottom-1.5 text-[8px] font-black uppercase text-text-muted opacity-40 group-hover:opacity-100 transition-opacity">
-                Double click to select
-              </span>
+            {/* Display Box with Copy Button */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                readOnly
+                value={generatedTempPassword}
+                className="flex-1 bg-white/[0.02] border border-white/[0.08] rounded-xl px-4 py-3 font-mono font-bold tracking-wider text-purple-bright text-center text-sm focus:outline-none"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(generatedTempPassword || '');
+                  toast.success('Temporary password copied!');
+                }}
+                className="px-5 py-3 rounded-xl bg-purple-primary hover:bg-purple-600 border border-purple-primary/20 text-white text-xs font-black uppercase tracking-widest transition-colors flex items-center gap-1.5 shrink-0"
+              >
+                Copy
+              </button>
             </div>
 
             <button
