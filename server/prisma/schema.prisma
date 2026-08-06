@@ -78,6 +78,7 @@ model User {
   availableBalance Decimal  @default(0) @db.Decimal(15, 2)
   lockedBalance    Decimal  @default(0) @db.Decimal(15, 2)
   frozen           Boolean  @default(false)
+  mustChangePassword Boolean  @default(false)
   role             UserRole @default(USER)
   lastLoginBonusAt DateTime?
   createdAt        DateTime @default(now())

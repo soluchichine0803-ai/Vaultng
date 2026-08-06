@@ -32,6 +32,20 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
       return res.status(403).json({ message: 'Forbidden: Account is frozen' });
     }
 
+    if (user.mustChangePassword) {
+      const isAllowed =
+        req.originalUrl.includes('/change-password') ||
+        req.originalUrl.includes('/me') ||
+        req.originalUrl.includes('/logout');
+
+      if (!isAllowed) {
+        return res.status(403).json({
+          message: 'Password change required',
+          mustChangePassword: true
+        });
+      }
+    }
+
     req.user = user;
     next();
   } catch (error) {

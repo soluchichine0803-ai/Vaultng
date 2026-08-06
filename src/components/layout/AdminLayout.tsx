@@ -3,6 +3,7 @@ import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import {
   LayoutDashboard,
+  Users,
   ArrowUpRight,
   ArrowDownLeft,
   History,
@@ -28,6 +29,7 @@ const AdminLayout: React.FC = () => {
 
   const navItems = [
     { label: 'Dashboard', path: '/admin', icon: LayoutDashboard },
+    { label: 'Users', path: '/admin/users', icon: Users },
     { label: 'Deposits', path: '/admin/deposits', icon: ArrowUpRight },
     { label: 'Withdrawals', path: '/admin/withdrawals', icon: ArrowDownLeft },
     { label: 'Transactions', path: '/admin/transactions', icon: History },

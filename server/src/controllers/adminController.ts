@@ -3,6 +3,18 @@ import prisma from '../utils/prisma';
 import { AuthRequest } from '../types/auth';
 import { DepositStatus, WithdrawalStatus, TransactionType } from '@prisma/client';
 import { walletService } from '../services/walletService';
+import bcrypt from 'bcrypt';
+import crypto from 'crypto';
+
+function generateTemporaryPassword(length: number = 12): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  const randomBytes = crypto.randomBytes(length);
+  for (let i = 0; i < length; i++) {
+    result += chars[randomBytes[i] % chars.length];
+  }
+  return result;
+}
 
 export class AdminController {
   /**
@@ -305,6 +317,237 @@ export class AdminController {
       });
     } catch (error: any) {
       console.error('Error fetching transactions timeline:', error);
+      return res.status(500).json({ message: error.message || 'Internal server error' });
+    }
+  }
+
+  /**
+   * GET /api/admin/users
+   */
+  static async getUsers(req: AuthRequest, res: Response) {
+    try {
+      const users = await prisma.user.findMany({
+        orderBy: { createdAt: 'desc' },
+        include: {
+          _count: {
+            select: {
+              investments: {
+                where: { status: 'ACTIVE' }
+              },
+              referrals: true
+            }
+          }
+        }
+      });
+
+      const formattedUsers = users.map(user => {
+        return {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          phone: user.phone,
+          role: user.role,
+          frozen: user.frozen,
+          mustChangePassword: user.mustChangePassword,
+          createdAt: user.createdAt,
+          availableBalance: Number(user.availableBalance),
+          lockedBalance: Number(user.lockedBalance),
+          totalBalance: Number(user.availableBalance) + Number(user.lockedBalance),
+          activeInvestmentsCount: user._count?.investments || 0,
+          totalReferralsCount: user._count?.referrals || 0,
+        };
+      });
+
+      return res.status(200).json({
+        status: 'success',
+        data: formattedUsers
+      });
+    } catch (error: any) {
+      console.error('Error fetching users:', error);
+      return res.status(500).json({ message: error.message || 'Internal server error' });
+    }
+  }
+
+  /**
+   * GET /api/admin/users/:id
+   */
+  static async getUserProfile(req: AuthRequest, res: Response) {
+    try {
+      const id = req.params.id as string;
+
+      const user = await prisma.user.findUnique({
+        where: { id }
+      });
+
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      // Sums for wallet
+      const depositsSum = await prisma.deposit.aggregate({
+        where: { userId: id, status: DepositStatus.APPROVED },
+        _sum: { amount: true }
+      });
+
+      const withdrawalsSum = await prisma.withdrawal.aggregate({
+        where: { userId: id, status: WithdrawalStatus.PAID },
+        _sum: { amount: true }
+      });
+
+      const investmentsSum = await prisma.investment.aggregate({
+        where: { userId: id, status: { in: ['ACTIVE', 'COMPLETED'] } },
+        _sum: { amount: true }
+      });
+
+      // Histories
+      const investments = await prisma.investment.findMany({
+        where: { userId: id },
+        orderBy: { createdAt: 'desc' },
+        include: {
+          plan: {
+            select: { name: true }
+          }
+        }
+      });
+
+      const deposits = await prisma.deposit.findMany({
+        where: { userId: id },
+        orderBy: { createdAt: 'desc' }
+      });
+
+      const withdrawals = await prisma.withdrawal.findMany({
+        where: { userId: id },
+        orderBy: { createdAt: 'desc' }
+      });
+
+      const availableBalance = Number(user.availableBalance);
+      const lockedBalance = Number(user.lockedBalance);
+
+      return res.status(200).json({
+        status: 'success',
+        data: {
+          user: {
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            phone: user.phone,
+            role: user.role,
+            frozen: user.frozen,
+            mustChangePassword: user.mustChangePassword,
+            createdAt: user.createdAt,
+          },
+          wallet: {
+            availableBalance,
+            lockedBalance,
+            totalBalance: availableBalance + lockedBalance,
+            lifetimeDeposits: Number(depositsSum._sum.amount || 0),
+            lifetimeWithdrawals: Number(withdrawalsSum._sum.amount || 0),
+            lifetimeInvestments: Number(investmentsSum._sum.amount || 0),
+          },
+          investments: investments.map(inv => ({
+            id: inv.id,
+            amount: Number(inv.amount),
+            expectedProfit: Number(inv.expectedProfit),
+            roiPercentSnapshot: Number(inv.roiPercentSnapshot),
+            durationHoursSnapshot: inv.durationHoursSnapshot,
+            status: inv.status,
+            maturityDate: inv.maturityDate,
+            nextRoiPayoutAt: inv.nextRoiPayoutAt,
+            createdAt: inv.createdAt,
+            planName: inv.plan?.name || 'Unknown Plan'
+          })),
+          deposits: deposits.map(dep => ({
+            id: dep.id,
+            amount: Number(dep.amount),
+            method: dep.method,
+            reference: dep.reference,
+            customerReference: dep.customerReference,
+            proofImageUrl: dep.proofImageUrl,
+            status: dep.status,
+            rejectionReason: dep.rejectionReason,
+            reviewDate: dep.reviewDate,
+            createdAt: dep.createdAt,
+          })),
+          withdrawals: withdrawals.map(w => ({
+            id: w.id,
+            amount: Number(w.amount),
+            fee: Number(w.fee),
+            netAmount: Number(w.netAmount),
+            bankName: w.bankName,
+            accountNumber: w.accountNumber,
+            accountName: w.accountName,
+            status: w.status,
+            rejectionReason: w.rejectionReason,
+            completionDate: w.completionDate,
+            proofOfPaymentUrl: w.proofOfPaymentUrl,
+            createdAt: w.createdAt,
+          }))
+        }
+      });
+    } catch (error: any) {
+      console.error('Error fetching user profile:', error);
+      return res.status(500).json({ message: error.message || 'Internal server error' });
+    }
+  }
+
+  /**
+   * POST /api/admin/users/:id/reset-password
+   */
+  static async resetUserPassword(req: AuthRequest, res: Response) {
+    try {
+      const id = req.params.id as string;
+      const adminId = req.user?.id;
+
+      if (!adminId) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
+
+      const user = await prisma.user.findUnique({
+        where: { id }
+      });
+
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      // Generate secure temporary password
+      const tempPassword = generateTemporaryPassword(12);
+
+      // Hash temporary password
+      const passwordHash = await bcrypt.hash(tempPassword, 10);
+
+      // Update user inside transaction
+      await prisma.$transaction(async (tx) => {
+        // Update user password and set mustChangePassword = true
+        await tx.user.update({
+          where: { id },
+          data: {
+            passwordHash,
+            mustChangePassword: true
+          }
+        });
+
+        // Log admin action
+        await tx.adminLog.create({
+          data: {
+            adminId,
+            action: 'Password Reset',
+            targetUser: id,
+            details: `Admin reset password for user ${user.username} (${user.email}). Temporary password was generated and mustChangePassword flag was set.`,
+          }
+        });
+      });
+
+      // Return temporary password once to admin
+      return res.status(200).json({
+        status: 'success',
+        message: 'Password reset successfully',
+        data: {
+          temporaryPassword: tempPassword
+        }
+      });
+    } catch (error: any) {
+      console.error('Error resetting password:', error);
       return res.status(500).json({ message: error.message || 'Internal server error' });
     }
   }

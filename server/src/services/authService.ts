@@ -160,7 +160,10 @@ export const authService = {
     const newPasswordHash = await bcrypt.hash(data.newPassword, 10);
     return prisma.user.update({
       where: { id: userId },
-      data: { passwordHash: newPasswordHash },
+      data: {
+        passwordHash: newPasswordHash,
+        mustChangePassword: false
+      },
     });
   }
 };

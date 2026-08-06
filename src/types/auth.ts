@@ -6,6 +6,7 @@ export interface User {
   phone: string;
   username: string;
   role: UserRole;
+  mustChangePassword?: boolean;
   availableBalance: number;
   lockedBalance: number;
   totalBalance: number;
