@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import Card from '../components/ui/Card';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
-import { Wallet, AlertCircle } from 'lucide-react';
+import { Wallet, AlertCircle, MessageCircle } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import ParticleBackground from '../components/ui/ParticleBackground';
 
@@ -112,6 +112,22 @@ const Login: React.FC = () => {
             Create one
           </Link>
         </p>
+
+        {/* Support Help Section */}
+        <div className="pt-4 border-t border-white/[0.03] text-center space-y-2">
+          <p className="text-[10px] font-black uppercase tracking-widest text-text-muted opacity-60">
+            Need help accessing your account?
+          </p>
+          <a
+            href="https://wa.me/2349049804438"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#25D366]/10 hover:bg-[#25D366]/20 border border-[#25D366]/20 text-[#25D366] text-[10px] font-black uppercase tracking-widest transition-all"
+          >
+            <MessageCircle size={14} />
+            Contact Administrator
+          </a>
+        </div>
       </Card>
     </div>
   );
