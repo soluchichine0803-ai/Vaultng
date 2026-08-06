@@ -22,12 +22,17 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (user?.role === 'ADMIN') {
-    return <Navigate to="/admin" replace />;
+  // 1. Password change constraint takes precedence over everything
+  if (user?.mustChangePassword) {
+    if (location.pathname !== '/change-password') {
+      return <Navigate to="/change-password" replace />;
+    }
+    return <>{children}</>;
   }
 
-  if (user?.mustChangePassword && location.pathname !== '/change-password') {
-    return <Navigate to="/change-password" replace />;
+  // 2. Normal role-based routing checks
+  if (user?.role === 'ADMIN') {
+    return <Navigate to="/admin" replace />;
   }
 
   return <>{children}</>;
